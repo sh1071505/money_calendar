@@ -1,5 +1,5 @@
 // 앱 화면은 항상 네트워크 먼저(새 버전이 바로 반영), 오프라인일 때만 저장본 사용
-const CACHE = 'money-calendar-v3';
+const CACHE = 'money-calendar-v4';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

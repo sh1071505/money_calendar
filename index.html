@@ -24,7 +24,7 @@
   --warn:#FBBF24;--warn-soft:rgba(251,191,36,.14);--fix:#60A5FA;--fix-soft:rgba(96,165,250,.14);--inst:#F472B6;--inst-soft:rgba(244,114,182,.14);
   --up:#FB7185;--down:#60A5FA;
   --float:0 10px 30px rgba(0,0,0,.55);
-  --navh:62px;
+  --navh:62px;--maxw:760px;
   --sans:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -43,15 +43,15 @@ button{cursor:pointer}
 .appbar{position:sticky;top:0;z-index:30;background:var(--bar);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
   padding-top:env(safe-area-inset-top,0px);border-bottom:1px solid transparent}
 .appbar.scrolled{border-bottom-color:var(--line)}
-.appbar .in{max-width:760px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px;min-height:56px}
+.appbar .in{max-width:var(--maxw);margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px;min-height:56px}
 .appbar h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em;margin-right:auto}
 .iconbtn{width:40px;height:40px;border-radius:12px;border:0;background:var(--surface);color:var(--ink);display:grid;place-items:center}
 .iconbtn:active{background:var(--surface2)}
-.app{max-width:760px;margin:0 auto;padding-inline:16px;padding-top:6px;padding-bottom:calc(var(--navh) + 110px + env(safe-area-inset-bottom,0px))}
+.app{max-width:var(--maxw);margin:0 auto;padding-inline:16px;padding-top:6px;padding-bottom:calc(var(--navh) + 110px + env(safe-area-inset-bottom,0px))}
 /* bottom nav: 항상 하단 */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:35;background:var(--bar);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
   border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-.nav .in{max-width:760px;margin:0 auto;display:flex;height:var(--navh)}
+.nav .in{max-width:var(--maxw);margin:0 auto;display:flex;height:var(--navh)}
 .nav button{flex:1;border:0;background:transparent;color:var(--faint);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600}
 .nav button[aria-selected="true"]{color:var(--accent)}
 /* cards */
@@ -83,12 +83,22 @@ button{cursor:pointer}
 .bar>span{display:block;height:100%;border-radius:3px}
 .up{color:var(--up)}.down{color:var(--down)}
 /* summary */
-.sum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.sum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .stat{background:var(--surface);border-radius:16px;padding:13px 14px;min-width:0}
 .stat .k{font-size:12.5px;color:var(--muted)}
 .stat .v{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em}
 .stat .s{font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media (min-width:640px){.sum{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* 반응형 2단 (PC) */
+.cols{display:flex;flex-direction:column;gap:12px}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.col>.card,.col>.callout,.col>.headline{margin:0!important}
+@media (min-width:1000px){
+  :root{--maxw:1180px}
+  .app,.appbar .in,.nav .in{max-width:var(--maxw)}
+  .cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}
+  .col.sticky{position:sticky;top:calc(76px + env(safe-area-inset-top,0px))}
+  .day{min-height:88px}
+}
 /* calendar */
 .monthnav{display:flex;align-items:center;gap:4px}
 .monthnav .m{font-weight:700;font-size:18px;min-width:116px;text-align:center}
@@ -117,11 +127,20 @@ button.row:active,.row.click:active{background:var(--surface2)}
 .cicon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none}
 .dgroup{font-size:12.5px;color:var(--muted);font-weight:700;padding:14px 2px 2px}
 /* FAB */
-.fab{position:fixed;right:max(16px,calc((100vw - 760px)/2 + 16px));bottom:calc(var(--navh) + 14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;z-index:34}
+.fab{position:fixed;right:max(16px,calc((100vw - var(--maxw))/2 + 16px));bottom:calc(var(--navh) + 14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;z-index:34}
 .fab button{border:0;border-radius:28px;padding:13px 18px;font-weight:700;box-shadow:var(--float);display:flex;align-items:center;gap:6px;color:#fff;font-size:15px}
 .fab .e{background:var(--exp-solid)}.fab .i{background:var(--inc-solid)}
 /* assets */
 .hero .k{font-size:13px;color:var(--muted)}
+.herotop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fxchip{border:0;background:var(--sunk);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:4px}
+.fxchip b{color:var(--ink);font-weight:600}
+.fxchip .chev2{transition:transform .15s;display:inline-flex}
+.fxchip[aria-expanded="true"] .chev2{transform:rotate(90deg)}
+.fxpanel{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:4px 14px;background:var(--sunk);border-radius:12px;padding:10px 12px;margin:10px 0 4px;font-size:13px}
+.fxl{display:flex;justify-content:space-between;gap:8px}
+.fxl .code{color:var(--accent);font-weight:700}
+.fxl small{color:var(--muted);font-size:11px;margin-left:2px}
 .hero .big{font-size:clamp(30px,8.5vw,40px);font-weight:800;letter-spacing:-.035em;line-height:1.15}
 .hero .subs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
 .hero .subs .k{font-size:12px}
@@ -171,6 +190,24 @@ tfoot td{font-weight:700;border-bottom:0}
 .cb .l{display:flex;justify-content:space-between;font-size:13.5px;gap:8px;margin-bottom:5px}
 .cbgroup{font-size:13px;font-weight:700;color:var(--muted);margin:2px 0 10px}
 /* charts */
+svg.chart .hit{fill:transparent;cursor:pointer}
+.mhead2,.mrow{display:grid;grid-template-columns:62px repeat(var(--mc,3),minmax(0,1fr));gap:6px;align-items:center}
+.mhead2{font-size:11.5px;color:var(--faint);font-weight:600;padding:0 10px 4px}
+.mhead2 span:not(:first-child),.mrow span:not(:first-child){text-align:right}
+.mlist{position:relative;max-height:236px;overflow-y:auto;overscroll-behavior:contain;background:var(--sunk);border-radius:12px;padding:4px}
+.mrow{width:100%;border:0;background:transparent;border-radius:9px;padding:7px 8px;font-size:13.5px;text-align:left;color:var(--ink)}
+.mrow:active{background:var(--surface2)}
+.mrow.sel{background:var(--surface2);box-shadow:0 0 0 1.5px var(--accent) inset}
+.mrow .ml{font-weight:700;display:flex;align-items:center;gap:5px}
+.mrow .dot{width:6px;height:6px;border-radius:3px;background:var(--accent);display:inline-block}
+.seg.sm button{padding:5px 10px;font-size:12.5px}
+.row.c{padding:5px 2px;gap:10px;border-radius:10px}
+.row.c .t{font-size:13.5px;font-weight:600}
+.row.c .sub{font-size:11.5px}
+.row.c .r .num{font-size:13.5px}
+.row.c .badge{font-size:10px;padding:1px 5px}
+.dgroup.c{font-size:11.5px;padding:10px 2px 2px;display:flex;justify-content:space-between;color:var(--faint)}
+
 svg.chart{width:100%;height:auto;display:block;overflow:visible}
 svg.chart .grid{stroke:var(--line);stroke-width:1}
 svg.chart text{fill:var(--faint);font-size:11px;font-family:var(--sans)}
@@ -231,7 +268,7 @@ input[type=range]{width:100%;accent-color:var(--accent);padding:0;border:0;backg
 .keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px}
 .keypad button{height:48px;border:0;border-radius:12px;background:var(--sunk);font-weight:700;font-size:18px;touch-action:manipulation}
 .keypad button:active{background:var(--surface2)}
-.keypad .q{color:var(--accent);background:var(--accent-soft);font-size:14px}
+.keypad .w2{grid-column:span 2}
 .keypad .z{color:var(--fix)}
 .keypad .bk{color:var(--exp)}
 .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin-bottom:16px}
@@ -537,13 +574,14 @@ async function syncRemote(manual){
 /* ========== 차트 ========== */
 function niceStep(max,t=4){const raw=max/t||1;const p=Math.pow(10,Math.floor(Math.log10(raw)));const n=raw/p;return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p}
 function axes(W,L,R,top,step,y){let g='';for(let v=0;v<=top+step/1e6;v+=step)g+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text x="${L-6}" y="${(y(v)+4).toFixed(1)}" text-anchor="end">${v?man(v):'0'}</text>`;return g}
-function barChart({labels,series,h=210,sel=-1,every=1}){
+function barChart({labels,series,h=210,sel=-1,every=1,keys=null}){
   const W=640,H=h,L=50,R=4,T=10,B=24,iw=W-L-R,ih=H-T-B;const maxV=Math.max(1,...series.flatMap(s=>s.values));const step=niceStep(maxV);const top=Math.ceil(maxV/step)*step;const y=v=>T+ih-(v/top)*ih;
-  const n=labels.length,gw=iw/n,bw=Math.max(3,Math.min(18,gw*.7/series.length));let b='',x='';
+  const n=labels.length,gw=iw/n,bw=Math.max(3,Math.min(18,gw*.7/series.length));let b='',x='',hit='';
   labels.forEach((lb,i)=>{const cx=L+gw*i+gw/2,x0=cx-bw*series.length/2;
     series.forEach((s,j)=>{const v=s.values[i],yy=y(v);b+=`<rect x="${(x0+j*bw+.75).toFixed(1)}" y="${yy.toFixed(1)}" width="${(bw-1.5).toFixed(1)}" height="${Math.max(0,T+ih-yy).toFixed(1)}" rx="3" style="fill:${s.color};opacity:${sel>=0&&sel!==i?.35:1}"><title>${esc(lb)} ${s.name} ${won(v)}원</title></rect>`});
-    if(i%every===0||i===n-1)x+=`<text x="${cx.toFixed(1)}" y="${H-6}" text-anchor="middle" ${i===sel?'style="fill:var(--ink);font-weight:700"':''}>${esc(lb)}</text>`});
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${axes(W,L,R,top,step,y)}${b}${x}</svg>`}
+    if(i%every===0||i===n-1)x+=`<text x="${cx.toFixed(1)}" y="${H-6}" text-anchor="middle" ${i===sel?'style="fill:var(--ink);font-weight:700"':''}>${esc(lb)}</text>`;
+    if(keys)hit+=`<rect class="hit" data-bar="${keys[i]}" x="${(L+gw*i).toFixed(1)}" y="${T}" width="${gw.toFixed(1)}" height="${ih+B}"/>`});
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${sel>=0?`<rect x="${(L+gw*sel+1).toFixed(1)}" y="${T}" width="${(gw-2).toFixed(1)}" height="${ih}" rx="6" style="fill:var(--accent);fill-opacity:.1"/>`:''}${axes(W,L,R,top,step,y)}${b}${x}${hit}</svg>`}
 function lineChart({labels,series,h=230,every=1}){
   const W=640,H=h,L=54,R=10,T=12,B=24,iw=W-L-R,ih=H-T-B;const vals=series.flatMap(s=>s.values).filter(v=>v!=null);
   const maxV=Math.max(1,...vals);const step=niceStep(maxV);const top=Math.ceil(maxV/step)*step;const y=v=>T+ih-(Math.max(0,v)/top)*ih;
@@ -554,7 +592,7 @@ function lineChart({labels,series,h=230,every=1}){
     p+=`<path d="${d}" style="fill:none;stroke:${s.color};stroke-width:${s.width||2.2};${s.dash?'stroke-dasharray:5 4;':''}stroke-linejoin:round;stroke-linecap:round"/>`;
     if(si===0){const e=pts[pts.length-1];p+=`<circle cx="${e[0].toFixed(1)}" cy="${e[1].toFixed(1)}" r="4.5" style="fill:${s.color};stroke:var(--surface);stroke-width:2.5"/>`}});
   const cw=n>1?iw/(n-1):iw;
-  labels.forEach((lb,i)=>{if(i%every===0||i===n-1)x+=`<text x="${xx(i).toFixed(1)}" y="${H-6}" text-anchor="${i===0&&n>1?'start':i===n-1&&n>1?'end':'middle'}">${esc(lb)}</text>`;
+  labels.forEach((lb,i)=>{if((i%every===0&&(n-1-i>=every*.6||every===1))||i===n-1)x+=`<text x="${xx(i).toFixed(1)}" y="${H-6}" text-anchor="${i===0&&n>1?'start':i===n-1&&n>1?'end':'middle'}">${esc(lb)}</text>`;
     hov+=`<rect class="hov" x="${(xx(i)-cw/2).toFixed(1)}" y="${T}" width="${cw.toFixed(1)}" height="${ih}"><title>${esc(lb)}\n${series.map(s=>s.values[i]==null?'':`${s.name} ${won(s.values[i])}원`).filter(Boolean).join('\n')}</title></rect>`});
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${axes(W,L,R,top,step,y)}${p}${x}${hov}</svg>`}
 
@@ -574,7 +612,7 @@ window.addEventListener('scroll',()=>$('#appbar').classList.toggle('scrolled',wi
 
 /* ========== 1. 달력 ========== */
 function vCal(){
-  const T=totals();const {y,m}=UI.ym;const t=mTot(y,m);const first=new Date(y,m,1);const start=new Date(y,m,1-first.getDay());let cells='';
+  const {y,m}=UI.ym;const t=mTot(y,m);const first=new Date(y,m,1);const start=new Date(y,m,1-first.getDay());let cells='';
   ['일','월','화','수','목','금','토'].forEach((w,i)=>cells+=`<div class="dow ${i===0?'sun':i===6?'sat':''}">${w}</div>`);
   const byDay={};for(const o of monthOcc(y,m))(byDay[o.date]=byDay[o.date]||[]).push(o);
   for(let i=0;i<42;i++){const dt=new Date(start);dt.setDate(start.getDate()+i);if(i>=35&&dt.getMonth()!==m)break;
@@ -584,10 +622,8 @@ function vCal(){
     const cls=['day',out?'out':'',dt.getDay()===0?'sun':dt.getDay()===6?'sat':'',key===TK?'today':'',key===UI.sel&&!out?'sel':''].join(' ');
     cells+=`<button type="button" class="${cls}" data-date="${key}" ${out?'tabindex="-1"':''} aria-label="${mdw(key)}"><span class="d"><span>${dt.getDate()}</span></span>
       ${inc?`<span class="amt i">+${man(inc)}</span>`:''}${exp?`<span class="amt e">-${man(exp)}</span>`:''}${plan?`<span class="amt p"><span class="pl">예정 </span>${plan>0?'+':'-'}${man(Math.abs(plan))}</span>`:''}</button>`}
-  $('#view').innerHTML=`
+  $('#view').innerHTML=`<div class="cols"><div class="col">
   <section class="sum">
-    <div class="stat"><div class="k">총자산</div><div class="v num">${won(T.total)}</div><div class="s">금융 ${man(T.fin)} · 주택·차량 ${man(T.other)}</div></div>
-    <div class="stat"><div class="k">순자산 (대출 차감)</div><div class="v num">${won(T.net)}</div><div class="s">대출 -${man(T.debt)}</div></div>
     <div class="stat"><div class="k">${m+1}월 수입</div><div class="v num" style="color:var(--inc)">${won(t.inc)}</div><div class="s">${t.finc?`예정 +${man(t.finc)}`:'기록 기준'}</div></div>
     <div class="stat"><div class="k">${m+1}월 지출</div><div class="v num" style="color:var(--exp)">${won(t.exp)}</div><div class="s">${t.inv?`적립 ${man(t.inv)} 포함`:''}${t.inv&&t.fexp?' · ':''}${t.fexp?`예정 ${man(t.fexp)}`:''}${!t.inv&&!t.fexp?'기록 기준':''}</div></div>
   </section>
@@ -596,8 +632,8 @@ function vCal(){
       <button class="btn sm" id="goToday">오늘</button></div>
     <div class="cal" id="cal">${cells}</div>
     <div class="calfoot"><span class="hint">두 번 누르면 바로 기록</span><span class="hint num">이번 달 ${t.inc-t.exp>=0?'+':''}${won(t.inc-t.exp)}원</span></div>
-  </div>
-  <div class="card" id="dayPanel"></div>`;
+  </div></div>
+  <div class="col"><div class="card" id="dayPanel"></div></div></div>`;
   $('#prevM').onclick=()=>shiftMonth(-1);$('#nextM').onclick=()=>shiftMonth(1);
   $('#goToday').onclick=()=>{UI.ym={y:TODAY.getFullYear(),m:TODAY.getMonth()};UI.sel=TK;render()};
   $$('#cal .day:not(.out)').forEach(b=>b.addEventListener('click',()=>{const d=b.dataset.date,now=Date.now();
@@ -615,8 +651,8 @@ function renderDay(){const d=UI.sel;const dt=pd(d);const items=monthOcc(dt.getFu
     <div class="list">${items.length?items.map(txRow).join(''):'<div class="empty">기록 없음</div>'}</div>`;bindRows('#dayPanel')}
 let ROWS=new Map();
 function kind(o){if(o.auto==='loan')return['이자','b-warn'];if(o.auto==='dca')return['적립','b-acc'];if(o.inst)return['할부','b-inst'];if(o.repeat)return['반복','b-fix'];return null}
-function txRow(o){ROWS.set(o.oid,o);const k=kind(o);
-  return `<button type="button" class="row${o.future?' future':''}" data-oid="${esc(o.oid)}">${cbub(catIcon(o.type,o.cat))}
+function txRow(o,c){ROWS.set(o.oid,o);const k=kind(o);
+  return `<button type="button" class="row${c?' c':''}${o.future?' future':''}" data-oid="${esc(o.oid)}">${c?cbub(catIcon(o.type,o.cat),28,15):cbub(catIcon(o.type,o.cat))}
   <span style="min-width:0"><span class="t">${esc(o.title)}</span><span class="sub">${esc(o.cat)}${o.memo?' · '+esc(o.memo):''}</span></span>
   <span class="r"><span class="num" style="font-weight:700;color:${o.type==='income'?'var(--inc)':'var(--ink)'}">${o.type==='income'?'+':'-'}${won(o.amount)}</span>${o.future?'<span class="badge b-plan">예정</span>':k?`<span class="badge ${k[1]}">${k[0]}</span>`:''}</span></button>`}
 function bindRows(scope){$$(scope+' [data-oid]').forEach(b=>b.onclick=()=>openOcc(ROWS.get(b.dataset.oid)))}
@@ -642,9 +678,9 @@ function titleIndex(type){const m=new Map();for(const t of S.tx){if(t.type!==typ
   return [...m.values()].sort((a,b)=>b.n-a.n||(a.last<b.last?1:-1))}
 function renderSugg(){const box=$('#sugg');if(!box)return;const q=($('#fTitle').value||'').trim().toLowerCase();
   let list=titleIndex(F.type);list=q?list.filter(e=>e.title.toLowerCase().includes(q)&&e.title.toLowerCase()!==q):list;list=list.slice(0,8);
-  box.innerHTML=list.map((e,i)=>`<button type="button" data-sg="${i}">${cbub(catIcon(F.type,e.cat),24,14)}<span>${esc(e.title)}</span><small class="num">${man(e.amount)}</small></button>`).join('');
+  box.innerHTML=list.map((e,i)=>`<button type="button" data-sg="${i}">${cbub(catIcon(F.type,e.cat),24,14)}<span>${esc(e.title)}</span></button>`).join('');
   box.hidden=!list.length;
-  $$('[data-sg]').forEach(b=>b.onclick=()=>{const e=list[+b.dataset.sg];syncF();F.title=e.title;if(S.cats[F.type].some(c=>c.name===e.cat))F.cat=e.cat;if(!Number(F.amount))F.amount=String(e.amount);renderForm()})}
+  $$('[data-sg]').forEach(b=>b.onclick=()=>{const e=list[+b.dataset.sg];syncF();F.title=e.title;if(S.cats[F.type].some(c=>c.name===e.cat))F.cat=e.cat;renderForm()})}
 function syncF(){if(!$('#fDate'))return;F.date=$('#fDate').value||F.date;F.title=$('#fTitle').value;F.memo=$('#fMemo').value}
 function renderForm(){
   const cats=S.cats[F.type].filter(c=>!LOCKED.includes(c.name));const amt=Number(F.amount||0);
@@ -653,7 +689,7 @@ function renderForm(){
   <div class="field"><label for="fTitle">제목</label><input id="fTitle" value="${esc(F.title)}" placeholder="${F.type==='expense'?'예: 점심, 넷플릭스':'예: 강의료'}" autocomplete="off" enterkeyhint="done"></div>
   <div class="sugg" id="sugg" hidden></div>
   <div class="amtdisp ${amt?'':'ph'}" id="amtDisp" tabindex="0" aria-live="polite">${amt?won(amt)+'원':'0원'}</div>
-  <div class="keypad">${[['1'],['2'],['3'],['+1000','+천','q'],['4'],['5'],['6'],['+10000','+만','q'],['7'],['8'],['9'],['00','00','z'],['C','C','bk'],['0'],['000','000','z'],['BK','⌫','bk']].map(([k,l,c])=>`<button type="button" data-k="${k}" class="${c||''}">${l||k}</button>`).join('')}</div>
+  <div class="keypad">${[['1'],['2'],['3'],['BK','⌫','bk'],['4'],['5'],['6'],['C','C','bk'],['7'],['8'],['9'],['00','00','z'],['0','0','w2'],['000','000','z'],['0000','0000','z']].map(([k,l,c])=>`<button type="button" data-k="${k}" class="${c||''}">${l||k}</button>`).join('')}</div>
   <div class="flabel" style="margin-bottom:8px">분류</div>
   <div class="catgrid">${cats.map(c=>`<button type="button" data-cat="${esc(c.name)}" aria-pressed="${F.cat===c.name}">${cbub(c.icon,40,20)}<span>${esc(c.name)}</span></button>`).join('')}<button type="button" class="add" id="addCat"><span class="cicon">${ic('plus',20)}</span><span>추가</span></button></div>
   ${F.addCat?`<div class="inrow" style="margin:-6px 0 14px"><input id="newCat" class="inp" placeholder="새 분류 이름"><button type="button" class="btn primary" id="newCatOk">추가</button></div>`:''}
@@ -676,7 +712,7 @@ function renderForm(){
   $('#fSave').onclick=()=>{syncF();saveForm()};
   if($('#fDel'))$('#fDel').onclick=()=>{if(!F.del){syncF();F.del=true;renderForm();return}const t=S.tx.find(x=>x.id===F.id);S.tx=S.tx.filter(x=>x.id!==F.id);touch();closeModal();render();toast(`${t?.title||'기록'} 삭제됨`)};
 }
-function key(k){let v=F.amount||'';if(k==='BK')v=v.slice(0,-1);else if(k==='C')v='';else if(k[0]==='+')v=String(Number(v||0)+Number(k.slice(1)));else{v=(v==='0'?'':v)+k;if(v.replace(/^0+/,'')==='')v=''}
+function key(k){let v=F.amount||'';if(k==='BK')v=v.slice(0,-1);else if(k==='C')v='';else{v=(v==='0'?'':v)+k;if(v.replace(/^0+/,'')==='')v=''}
   if(v.length>12)return;F.amount=v.replace(/^0+(?=\d)/,'');updAmt()}
 function updAmt(){const a=Number(F.amount||0);const el=$('#amtDisp');if(!el)return;el.textContent=won(a)+'원';el.classList.toggle('ph',!a);if($('#instCalc'))$('#instCalc').textContent=`월 ${won(a/F.months)}원 · 총액 입력`}
 function saveForm(){const amt=Number(F.amount||0);if(!amt){toast('금액을 입력해 주세요');return}
@@ -699,20 +735,25 @@ function vAsset(){
   const loans=S.loans.map(l=>`<button type="button" class="row" data-loan="${l.id}"><span class="cicon" style="background:var(--exp-soft);color:var(--exp)">${ic('loan',19)}</span>
     <span style="min-width:0"><span class="t">${esc(l.name)}</span><span class="sub">${esc(l.lender)} · 연 ${l.rate}% · 월 이자 ${won(l.interest)}원</span></span><span class="r"><span class="num" style="font-weight:700;color:var(--exp)">-${won(l.principal)}</span><span class="hint">매월 1일 자동 지출</span></span></button>`).join('');
   const lu=S.priceUpdated?`시세 ${esc(S.priceUpdated)}`:'자동 시세 아직 없음';
-  $('#view').innerHTML=`
+  const fxList=['USD','JPY','CNY','EUR','GBP'].map(c=>`<div class="fxl"><span class="code">${c}</span><span class="num">${(fxr(c)*(c==='JPY'?100:1)).toLocaleString('ko-KR',{maximumFractionDigits:2})}원${c==='JPY'?'<small>/100엔</small>':''}</span></div>`).join('');
+  $('#view').innerHTML=`<div class="cols"><div class="col sticky">
   <div class="card hero">
-    <div class="k">총 금융자산</div><div class="big num">${won(T.fin)}<span style="font-size:.5em;font-weight:600;margin-left:2px">원</span></div>
+    <div class="herotop"><div class="k">총 금융자산</div>
+      <button type="button" class="fxchip" id="fxChip" aria-expanded="${!!UI.fxOpen}"><span>USD</span> <b class="num">${fxr('USD').toLocaleString('ko-KR',{maximumFractionDigits:2})}원</b> <span class="chev2">${ic('chev',12)}</span></button></div>
+    ${UI.fxOpen?`<div class="fxpanel">${fxList}<div class="hint" style="grid-column:1/-1">${S.priceUpdated?esc(S.priceUpdated)+' 기준':'기본값 · 시세를 받으면 갱신돼요'}</div></div>`:''}
+    <div class="big num">${won(T.fin)}<span style="font-size:.5em;font-weight:600;margin-left:2px">원</span></div>
     <div class="stackbar">${finCats.map(c=>T.by[c.id]>0?`<span style="flex:${T.by[c.id]};background:${c.color}"></span>`:'').join('')}</div>
     <div class="legend">${finCats.map(c=>`<span><i style="background:${c.color}"></i>${c.name} ${T.fin?(T.by[c.id]/T.fin*100).toFixed(0):0}%</span>`).join('')}</div>
     <div class="subs"><div><div class="k">순금융자산</div><div class="v num">${man(T.netFin)}</div></div><div><div class="k">총자산</div><div class="v num">${man(T.total)}</div></div><div><div class="k">부채</div><div class="v num" style="color:var(--exp)">-${man(T.debt)}</div></div></div>
     <div class="pricebar"><span class="hint">${lu} · 이번 달 적립 ${man(monthDca)}원</span><button type="button" class="btn sm" id="refresh">${ic('refresh',14)} 시세 받기</button></div>
   </div>
-  <div class="card">${accs}</div>
   <div class="card"><div class="chead"><h2>대출</h2><button type="button" class="btn sm primary" id="addLoan">${ic('plus',14)} 대출 추가</button></div>
     <div class="list">${loans||'<div class="empty">등록된 대출 없음</div>'}</div>
     ${S.loans.length?`<div class="calcline" style="margin:8px 0 0">합계 -${won(T.debt)}원 · 월 이자 ${won(T.interest)}원</div>`:''}</div>
-  <div class="callout gap">해외주식과 코인은 매일 아침 시세가 자동으로 들어와요. 국내주식은 현재가를 직접 고쳐 주세요. 대출 이자는 매월 1일, 적립매수는 정한 날짜에 지출로 자동 등록되고 자산 보유량에 더해져요.</div>`;
-  $$('[data-acc]').forEach(b=>b.onclick=()=>{const k=b.dataset.acc;UI.open.has(k)?UI.open.delete(k):UI.open.add(k);vAsset()});
+  <div class="callout">해외주식과 코인은 매일 아침 시세가 자동으로 들어와요. 국내주식은 현재가를 직접 고쳐 주세요. 대출 이자는 매월 1일, 적립매수는 정한 날짜에 지출로 자동 등록되고 자산 보유량에 더해져요.</div></div>
+  <div class="col"><div class="card">${accs}</div></div></div>`;
+  $('#fxChip').onclick=()=>{UI.fxOpen=!UI.fxOpen;vAsset()};
+  $$('[data-acc]').forEach(b=>b.onclick=()=>{const k=b.dataset.acc;const was=UI.open.has(k);UI.open=new Set(was?[]:[k]);vAsset();if(!was){const el=$(`[data-acc="${k}"]`);if(el&&el.getBoundingClientRect().top<70)el.scrollIntoView({block:'start',behavior:'smooth'})}});
   $$('[data-add]').forEach(b=>b.onclick=()=>openAsset(b.dataset.add,null));
   $$('[data-item]').forEach(r=>r.onclick=()=>openAsset(r.dataset.cat,r.dataset.item));
   $$('[data-loan]').forEach(b=>b.onclick=()=>openLoan(b.dataset.loan));$('#addLoan').onclick=()=>openLoan(null);
@@ -789,53 +830,65 @@ function renderLoan(){
 
 /* ========== 3. 수입·지출 ========== */
 function vFlow(){
-  const Fl=UI.flow;const showI=Fl.filter!=='expense',showE=Fl.filter!=='income';const cur=ymOf(TK);const f0=firstYM();let chart='',cards='',detail='';
+  const Fl=UI.flow;const showI=Fl.filter!=='expense',showE=Fl.filter!=='income';const cur=ymOf(TK);const f0=firstYM();const M=Fl.period==='M';
+  const prevList=$('#mlist');const prevTop=prevList?prevList.scrollTop:null;
   const ser=vals=>[showI?{name:'수입',color:'var(--inc)',values:vals.map(v=>v.inc)}:null,showE?{name:'지출',color:'var(--exp)',values:vals.map(v=>v.exp)}:null].filter(Boolean);
-  if(Fl.period==='M'){const last12=[];for(let k=11;k>=0;k--)last12.push(addMonths(cur,-k));
-    const tv=last12.map(ym=>{const [y,m]=ym.split('-').map(Number);return mTot(y,m-1)});
-    chart=barChart({labels:last12.map(ym=>`${+ym.slice(5)}월`),series:ser(tv),sel:last12.indexOf(Fl.selM),every:window.innerWidth<500?2:1});
-    const all=[];for(let ym=f0;ym<=cur;ym=addMonths(ym,1))all.push(ym);
-    cards=all.map(ym=>{const [y,m]=ym.split('-').map(Number);return pcard(ym,`${String(y).slice(2)}.${pad(m)}`,mTot(y,m-1),ym===Fl.selM,ym===cur)}).join('');
-    const [sy,sm]=Fl.selM.split('-').map(Number);const t=mTot(sy,sm-1);
-    const occ=monthOcc(sy,sm-1).filter(o=>(showI&&o.type==='income')||(showE&&o.type==='expense')).slice().reverse();const groups={};occ.forEach(o=>(groups[o.date]=groups[o.date]||[]).push(o));
-    detail=`<div class="card"><div class="chead"><h2>${sm}월 분류별</h2></div>${catBlock(t,showI,showE)}</div>
-      <div class="card"><div class="chead"><h2>${sm}월 내역</h2><span class="hint">${occ.length}건</span></div><div class="list">${Object.keys(groups).length?Object.entries(groups).map(([d,arr])=>`<div class="dgroup">${mdw(d)}</div>${arr.map(txRow).join('')}`).join(''):'<div class="empty">내역 없음</div>'}</div></div>`;
-  }else{const years=[];for(let y=+f0.slice(0,4);y<=TODAY.getFullYear();y++)years.push(y);const tv=years.map(yTot);
-    chart=barChart({labels:years.map(y=>y+'년'),series:ser(tv),sel:years.indexOf(Fl.selY)});
-    cards=years.map((y,i)=>pcard(String(y),`${y}년`,tv[i],y===Fl.selY,y===TODAY.getFullYear())).join('');const t=yTot(Fl.selY);
-    detail=`<div class="card"><div class="chead"><h2>${Fl.selY}년 월별</h2><span class="hint">월을 누르면 내역으로</span></div><div class="tbl-wrap"><table><thead><tr><th>월</th>${showI?'<th class="r">수입</th>':''}${showE?'<th class="r">지출</th>':''}${showI&&showE?'<th class="r">합계</th>':''}</tr></thead>
+  const tot=k=>{if(M){const [y,m]=k.split('-').map(Number);return mTot(y,m-1)}return yTot(+k)};
+  let keys=[],chartKeys=[],labelOf;
+  if(M){for(let ym=cur;ym>=f0;ym=addMonths(ym,-1))keys.push(ym);for(let k=11;k>=0;k--)chartKeys.push(addMonths(cur,-k));labelOf=k=>`${+k.slice(5)}월`}
+  else{for(let y=TODAY.getFullYear();y>=+f0.slice(0,4);y--)keys.push(String(y));chartKeys=[...keys].reverse();labelOf=k=>k+'년'}
+  const selKey=M?Fl.selM:String(Fl.selY);const T={};keys.forEach(k=>T[k]=tot(k));chartKeys.forEach(k=>{if(!T[k])T[k]=tot(k)});
+  const chart=barChart({labels:chartKeys.map(labelOf),keys:chartKeys,series:ser(chartKeys.map(k=>T[k])),sel:chartKeys.indexOf(selKey),every:M&&window.innerWidth<500?2:1});
+  const sgn=v=>(v>=0?'+':'')+man(v);
+  const nowKey=M?cur:String(TODAY.getFullYear());const mc=(showI?1:0)+(showE?1:0)+(showI&&showE?1:0);
+  const mlist=`<div class="mhead2" style="--mc:${mc}"><span>${M?'월':'연도'}</span>${showI?'<span>수입</span>':''}${showE?'<span>지출</span>':''}${showI&&showE?'<span>합계</span>':''}</div>
+    <div class="mlist" id="mlist" style="--mc:${mc}">${keys.map(k=>{const t=T[k];return `<button type="button" class="mrow${k===selKey?' sel':''}" data-pc="${k}"><span class="ml">${M?`${k.slice(2,4)}.${k.slice(5)}`:k}${k===nowKey?'<i class="dot"></i>':''}</span>${showI?`<span class="num" style="color:var(--inc)">${man(t.inc)}</span>`:''}${showE?`<span class="num" style="color:var(--exp)">${man(t.exp)}</span>`:''}${showI&&showE?`<span class="num">${sgn(t.inc-t.exp)}</span>`:''}</button>`}).join('')}</div>`;
+  let right='';const t=T[selKey]||tot(selKey);
+  if(M){const [sy,sm]=Fl.selM.split('-').map(Number);const df=Fl.dfilter||'all';
+    const occ=monthOcc(sy,sm-1).filter(o=>(showI&&o.type==='income')||(showE&&o.type==='expense')).filter(o=>df==='all'||o.type===df).slice().reverse();
+    const groups={};occ.forEach(o=>(groups[o.date]=groups[o.date]||[]).push(o));
+    right=`<div class="card"><div class="chead"><h2>${sm}월 분류별</h2></div>${catBlock(t,showI,showE)}</div>
+      <div class="card"><div class="chead"><h2>${sm}월 내역 <span class="hint">${occ.length}건</span></h2><div class="seg sm">${[['all','전체'],['expense','지출'],['income','수입']].map(([k,l])=>`<button type="button" data-df="${k}" aria-pressed="${df===k}">${l}</button>`).join('')}</div></div>
+      <div class="list">${Object.keys(groups).length?Object.entries(groups).map(([d,arr])=>{const di=arr.filter(o=>o.type==='income').reduce((a,o)=>a+o.amount,0),de=arr.filter(o=>o.type==='expense').reduce((a,o)=>a+o.amount,0);
+        return `<div class="dgroup c"><span>${mdw(d)}</span><span class="num">${di?`<span style="color:var(--inc)">+${won(di)}</span> `:''}${de?`-${won(de)}`:''}</span></div>${arr.map(o=>txRow(o,true)).join('')}`}).join(''):'<div class="empty">내역 없음</div>'}</div></div>`}
+  else{right=`<div class="card"><div class="chead"><h2>${Fl.selY}년 월별</h2><span class="hint">월을 누르면 내역으로</span></div><div class="tbl-wrap"><table><thead><tr><th>월</th>${showI?'<th class="r">수입</th>':''}${showE?'<th class="r">지출</th>':''}${showI&&showE?'<th class="r">합계</th>':''}</tr></thead>
       <tbody>${t.months.map((mt,i)=>(mt.inc||mt.exp)?`<tr class="click" data-goto="${Fl.selY}-${pad(i+1)}"><td>${i+1}월</td>${showI?`<td class="r num" style="color:var(--inc)">${won(mt.inc)}</td>`:''}${showE?`<td class="r num" style="color:var(--exp)">${won(mt.exp)}</td>`:''}${showI&&showE?`<td class="r num">${mt.inc-mt.exp>=0?'+':''}${won(mt.inc-mt.exp)}</td>`:''}</tr>`:'').join('')}</tbody>
       <tfoot><tr><td>합계</td>${showI?`<td class="r num">${won(t.inc)}</td>`:''}${showE?`<td class="r num">${won(t.exp)}</td>`:''}${showI&&showE?`<td class="r num">${t.inc-t.exp>=0?'+':''}${won(t.inc-t.exp)}</td>`:''}</tr></tfoot></table></div></div>
       <div class="card"><div class="chead"><h2>${Fl.selY}년 분류별</h2></div>${catBlock(t,showI,showE)}</div>`}
   const rec=S.tx.filter(t=>(t.repeat||t.inst)&&((showI&&t.type==='income')||(showE&&t.type==='expense')));
   const recRows=rec.sort((a,b)=>(b.inst?1:0)-(a.inst?1:0)||b.amount-a.amount).map(t=>{const lab=t.inst?`할부 ${t.inst.months}개월 · 월 ${won(t.amount/t.inst.months)}원`:`${REP[t.repeat]} ${t.repeat==='W'||t.repeat==='2W'?DOW[pd(t.date).getDay()]+'요일':t.repeat==='Y'?md(t.date):pd(t.date).getDate()+'일'}`;
-    return `<button type="button" class="row" data-rec="${t.id}">${cbub(catIcon(t.type,t.cat))}<span style="min-width:0"><span class="t">${esc(t.title)}</span><span class="sub">${lab}${t.memo?' · '+esc(t.memo):''}</span></span><span class="r"><span class="num" style="font-weight:700">${won(t.amount)}</span><span class="badge ${t.inst?'b-inst':'b-fix'}">${t.inst?'할부':'반복'}</span></span></button>`}).join('');
-  const autoRows=showE?[...S.loans.map(l=>`<button type="button" class="row" data-loan="${l.id}">${cbub(catIcon('expense','대출이자'))}<span style="min-width:0"><span class="t">${esc(l.name)} 이자</span><span class="sub">매월 1일 · 자산·부채에서 연동</span></span><span class="r"><span class="num" style="font-weight:700">${won(l.interest)}</span><span class="badge b-warn">이자</span></span></button>`),
-    ...S.assets.filter(a=>a.dca&&ACAT[a.cat].dca).map(a=>`<button type="button" class="row" data-dca="${a.id}">${cbub(catIcon('expense','적립매수'))}<span style="min-width:0"><span class="t">${esc(a.name)} 적립매수</span><span class="sub">${esc(dcaLabel(a))} · 자산에 자동 반영</span></span><span class="r"><span class="num" style="font-weight:700">${a.dca.basis==='amt'?won(a.dca.value):'≈'+won(a.dca.value*a.price*fxr(a.cur))}</span><span class="badge b-acc">적립</span></span></button>`)].join(''):'';
+    return `<button type="button" class="row c" data-rec="${t.id}">${cbub(catIcon(t.type,t.cat),30,16)}<span style="min-width:0"><span class="t">${esc(t.title)}</span><span class="sub">${lab}${t.memo?' · '+esc(t.memo):''}</span></span><span class="r"><span class="num" style="font-weight:700">${won(t.amount)}</span><span class="badge ${t.inst?'b-inst':'b-fix'}">${t.inst?'할부':'반복'}</span></span></button>`}).join('');
+  const autoRows=showE?[...S.loans.map(l=>`<button type="button" class="row c" data-loan="${l.id}">${cbub(catIcon('expense','대출이자'),30,16)}<span style="min-width:0"><span class="t">${esc(l.name)} 이자</span><span class="sub">매월 1일 · 자산·부채에서 연동</span></span><span class="r"><span class="num" style="font-weight:700">${won(l.interest)}</span><span class="badge b-warn">이자</span></span></button>`),
+    ...S.assets.filter(a=>a.dca&&ACAT[a.cat].dca).map(a=>`<button type="button" class="row c" data-dca="${a.id}">${cbub(catIcon('expense','적립매수'),30,16)}<span style="min-width:0"><span class="t">${esc(a.name)} 적립매수</span><span class="sub">${esc(dcaLabel(a))} · 자산에 자동 반영</span></span><span class="r"><span class="num" style="font-weight:700">${a.dca.basis==='amt'?won(a.dca.value):'≈'+won(a.dca.value*a.price*fxr(a.cur))}</span><span class="badge b-acc">적립</span></span></button>`)].join(''):'';
   $('#view').innerHTML=`
   <div class="toolbar"><div class="seg">${[['all','전체'],['income','수입'],['expense','지출']].map(([k,l])=>`<button type="button" data-filter="${k}" aria-pressed="${Fl.filter===k}">${l}</button>`).join('')}</div>
     <span class="sp"></span><div class="seg">${[['M','월별'],['Y','연도별']].map(([k,l])=>`<button type="button" data-period="${k}" aria-pressed="${Fl.period===k}">${l}</button>`).join('')}</div></div>
-  <div class="card"><div class="chead"><h2>${Fl.period==='M'?'최근 12개월':'연도별'}</h2><div class="legend">${showI?'<span><i style="background:var(--inc)"></i>수입</span>':''}${showE?'<span><i style="background:var(--exp)"></i>지출</span>':''}</div></div>${chart}
-    <div class="chead" style="margin:14px 0 8px"><span class="hint">${Fl.period==='M'?'월':'연도'}을 골라 보기</span><button type="button" class="btn sm" id="toNow">${Fl.period==='M'?'이번 달로':'올해로'}</button></div>
-    <div class="scroller" id="scroller">${cards}</div></div>
-  ${detail}
+  <div class="cols"><div class="col">
+  <div class="card"><div class="chead"><h2>${M?'최근 12개월':'연도별'}</h2><div class="legend">${showI?'<span><i style="background:var(--inc)"></i>수입</span>':''}${showE?'<span><i style="background:var(--exp)"></i>지출</span>':''}</div></div>${chart}
+    <div class="chead" style="margin:12px 0 6px"><span class="hint">막대나 목록을 눌러 ${M?'월':'연도'} 선택</span><button type="button" class="btn sm" id="toNow">${M?'이번 달로':'올해로'}</button></div>
+    ${mlist}</div>
   <div class="card"><div class="chead"><h2>반복 · 자동 항목</h2><button type="button" class="btn sm primary" id="addRec">${ic('plus',14)} 반복 등록</button></div>
     <p class="calcline" style="margin:-4px 0 6px">월 고정 지출 ${won(fixedMonthly())}원 (연납은 ÷12, 이자 포함)</p>
-    <div class="list">${recRows+autoRows||'<div class="empty">등록된 반복 항목 없음</div>'}</div></div>`;
-  $$('[data-filter]').forEach(b=>b.onclick=()=>{Fl.filter=b.dataset.filter;vFlow()});$$('[data-period]').forEach(b=>b.onclick=()=>{Fl.period=b.dataset.period;vFlow()});
-  $$('[data-pc]').forEach(b=>b.onclick=()=>{if(Fl.period==='M')Fl.selM=b.dataset.pc;else Fl.selY=+b.dataset.pc;vFlow()});
-  $$('[data-goto]').forEach(r=>r.onclick=()=>{Fl.period='M';Fl.selM=r.dataset.goto;vFlow()});
+    <div class="list">${recRows+autoRows||'<div class="empty">등록된 반복 항목 없음</div>'}</div></div>
+  </div><div class="col">${right}</div></div>`;
+  const pick=(k,from)=>{if(M)Fl.selM=k;else Fl.selY=+k;Fl.from=from;vFlow()};
+  $$('[data-filter]').forEach(b=>b.onclick=()=>{Fl.filter=b.dataset.filter;Fl.from='keep';vFlow()});
+  $$('[data-period]').forEach(b=>b.onclick=()=>{Fl.period=b.dataset.period;Fl.from='chart';vFlow()});
+  $$('[data-pc]').forEach(b=>b.onclick=()=>pick(b.dataset.pc,'list'));
+  $$('[data-bar]').forEach(r=>r.addEventListener('click',()=>pick(r.dataset.bar,'chart')));
+  $$('[data-df]').forEach(b=>b.onclick=()=>{Fl.dfilter=b.dataset.df;Fl.from='keep';vFlow()});
+  $$('[data-goto]').forEach(r=>r.onclick=()=>{Fl.period='M';Fl.selM=r.dataset.goto;Fl.from='chart';vFlow()});
   $$('[data-rec]').forEach(b=>b.onclick=()=>openForm({edit:S.tx.find(t=>t.id===b.dataset.rec)}));
   $$('#view [data-loan]').forEach(b=>b.onclick=()=>openLoan(b.dataset.loan));
   $$('[data-dca]').forEach(b=>b.onclick=()=>{const a=S.assets.find(x=>x.id===b.dataset.dca);openAsset(a.cat,a.id)});
   $('#addRec').onclick=()=>openForm({date:TK,type:Fl.filter==='income'?'income':'expense',mode:'repeat'});
-  $('#toNow').onclick=()=>{if(Fl.period==='M')Fl.selM=cur;else Fl.selY=TODAY.getFullYear();vFlow()};
-  bindRows('#view');const sel=$('#scroller .pcard.sel');if(sel){const sc=$('#scroller');sc.scrollLeft=sel.offsetLeft-sc.clientWidth/2+sel.clientWidth/2}
+  $('#toNow').onclick=()=>pick(nowKey,'chart');
+  bindRows('#view');
+  const ml=$('#mlist'),sel=$('#mlist .mrow.sel');
+  if(ml){if(prevTop!=null&&(Fl.from==='list'||Fl.from==='keep'))ml.scrollTop=prevTop;
+    else if(sel){const target=Math.max(0,sel.offsetTop-ml.clientHeight/2+sel.clientHeight/2);if(Fl.from==='chart'&&ml.scrollTo)ml.scrollTo({top:target,behavior:'smooth'});else ml.scrollTop=target}}
+  Fl.from=null;
 }
-function pcard(key,label,t,sel,now){const Fl=UI.flow;
-  return `<button type="button" class="pcard${sel?' sel':''}" data-pc="${key}"><span class="lb"><span>${label}</span>${now?'<span class="badge b-acc">지금</span>':''}</span>
-    ${Fl.filter!=='expense'?`<span class="ln"><span>수입</span><span class="num" style="color:var(--inc)">${man(t.inc)}</span></span>`:''}${Fl.filter!=='income'?`<span class="ln"><span>지출</span><span class="num" style="color:var(--exp)">${man(t.exp)}</span></span>`:''}
-    ${Fl.filter==='all'?`<span class="ln"><span>합계</span><span class="num" style="color:var(--ink)">${t.inc-t.exp>=0?'+':''}${man(t.inc-t.exp)}</span></span>`:''}</button>`}
 function catBlock(t,showI,showE){
   const block=(type,map,color,label)=>{const order=S.cats[type].map(c=>c.name);const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);const max=arr[0]?.[1]||1;const sum=arr.reduce((s,x)=>s+x[1],0);
     return `<div class="cbgroup">${label} ${won(sum)}원</div>${arr.length?arr.map(([c,v])=>`<div class="cb">${cbub(catIcon(type,c),30,16)}<div><div class="l"><span>${esc(c)}${c==='적립매수'?' <span class="hint">· 자산으로 이동</span>':''}</span><span class="num">${won(v)} <span class="hint">${(v/sum*100).toFixed(0)}%</span></span></div><div class="bar"><span style="width:${v/max*100}%;background:${color}"></span></div></div></div>`).join(''):'<div class="empty">없음</div>'}`};
@@ -869,12 +922,12 @@ function vMonthly(){
   }else{repHtml=`<div class="card"><div class="empty" style="padding:28px 6px">${isWeb()?'아직 받은 리포트가 없어요. 매월 1일 아침에 새 리포트가 올라와요.':'리포트는 웹 주소(GitHub Pages)로 열었을 때 받아와요.'}</div></div>`}
   $('#sub').innerHTML=`
   ${months.length?`<div class="chips" style="margin-bottom:12px">${months.map(m=>`<button type="button" class="chip" data-rm="${m}" aria-pressed="${m===R.month}">${m.slice(2,4)}년 ${+m.slice(5)}월</button>`).join('')}</div>`:''}
-  ${repHtml}
+  <div class="cols"><div class="col">${repHtml}</div><div class="col sticky">
   <div class="card"><div class="chead"><h2>자산 추이</h2><div class="seg">${[['1y','1년'],['all','전체']].map(([k,l])=>`<button type="button" data-range="${k}" aria-pressed="${R.range===k}">${l}</button>`).join('')}</div></div>
     <div class="kpis"><div><div class="k">${rm}월 금융자산</div><div class="v num">${man(now?.fin||0)}</div></div><div><div class="k">전월 대비</div><div class="v num ${diff>=0?'up':'down'}">${diff>=0?'+':''}${man(diff)}</div></div><div><div class="k">순금융자산</div><div class="v num">${man((now?.fin||0)-(now?.debt||0))}</div></div></div>
     ${chart}<div class="legend" style="margin-top:8px"><span><i style="background:var(--accent)"></i>금융자산</span><span><i style="background:var(--inc)"></i>순금융자산</span></div></div>
   <div class="card"><div class="chead"><h2>분류별 변화</h2><span class="hint">전월 말 → ${rm}월</span></div><div class="tbl-wrap"><table><thead><tr><th>분류</th><th class="r">전월</th><th class="r">${rm}월</th><th class="r">변화</th></tr></thead><tbody>${catRows}</tbody></table></div></div>
-  <div class="card"><div class="chead"><h2>내 메모</h2><span class="hint" id="memoSaved">${R.month.slice(0,4)}년 ${rm}월</span></div><textarea class="note" id="memo" placeholder="이번 달 시장을 보며 든 생각">${esc(S.memo[R.month]||'')}</textarea></div>`;
+  <div class="card"><div class="chead"><h2>내 메모</h2><span class="hint" id="memoSaved">${R.month.slice(0,4)}년 ${rm}월</span></div><textarea class="note" id="memo" placeholder="이번 달 시장을 보며 든 생각">${esc(S.memo[R.month]||'')}</textarea></div></div></div>`;
   $$('[data-rm]').forEach(b=>b.onclick=()=>{R.month=b.dataset.rm;vMonthly()});$$('[data-range]').forEach(b=>b.onclick=()=>{R.range=b.dataset.range;vMonthly()});
   $$('[data-nm]').forEach(b=>b.onclick=()=>{R.newsMode=b.dataset.nm;R.newsKey=(R.newsMode==='country'?COUNTRIES:ASSET_NEWS)[0];vMonthly()});$$('[data-nk]').forEach(b=>b.onclick=()=>{R.newsKey=b.dataset.nk;vMonthly()});
   $('#memo').oninput=e=>{S.memo[R.month]=e.target.value;save();$('#memoSaved').textContent='저장됨'};
@@ -885,20 +938,20 @@ function vCalc(){const T=totals();const C=CALC;const base=C.baseMode==='fin'?T.f
   const last=rows[rows.length-1];const yr0=TODAY.getFullYear();const every=Math.max(1,Math.ceil(C.years/6));
   const series=[{name:'평가금액',color:'var(--accent)',area:true,values:rows.map(x=>x.v)},{name:'누적 원금',color:'var(--muted)',values:rows.map(x=>x.c),width:1.6}];
   if(C.inflOn)series.push({name:'실질가치',color:'var(--warn)',dash:true,values:rows.map(x=>x.real)});
-  $('#sub').innerHTML=`<div class="card"><div class="kpis"><div><div class="k">${C.years}년 후 평가금액</div><div class="v num" style="color:var(--accent)">${man(last.v)}원</div></div><div><div class="k">총 납입</div><div class="v num">${man(last.c)}원</div></div><div><div class="k">수익</div><div class="v num">${man(last.v-last.c)}원</div></div>${C.inflOn?`<div><div class="k">실질가치</div><div class="v num" style="color:var(--warn)">${man(last.real)}원</div></div>`:''}</div>
+  $('#sub').innerHTML=`<div class="cols"><div class="col"><div class="card"><div class="kpis"><div><div class="k">${C.years}년 후 평가금액</div><div class="v num" style="color:var(--accent)">${man(last.v)}원</div></div><div><div class="k">총 납입</div><div class="v num">${man(last.c)}원</div></div><div><div class="k">수익</div><div class="v num">${man(last.v-last.c)}원</div></div>${C.inflOn?`<div><div class="k">실질가치</div><div class="v num" style="color:var(--warn)">${man(last.real)}원</div></div>`:''}</div>
     ${lineChart({labels:rows.map(x=>x.y?`${x.y}년`:'지금'),series,every,h:240})}
     <div class="legend" style="margin-top:8px"><span><i style="background:var(--accent)"></i>평가금액</span><span><i style="background:var(--muted)"></i>누적 원금</span>${C.inflOn?'<span><i style="background:var(--warn)"></i>실질가치</span>':''}</div></div>
-  <div class="card"><div class="chead"><h2>조건</h2><span class="hint">저장되지 않아요</span></div>
+  <div class="card"><div class="chead"><h2>연도별 표</h2><span class="hint">${C.inflOn?`물가 ${C.infl}% 반영`:'명목 금액'}</span></div>
+    <div class="tbl-wrap calc-tbl"><table><thead><tr><th>경과</th><th class="r">누적 원금</th><th class="r">평가금액</th><th class="r">배수</th>${C.inflOn?'<th class="r">실질가치</th>':''}</tr></thead>
+    <tbody>${rows.map(x=>`<tr><td>${x.y?`${x.y}년 <span class="hint">${yr0+x.y}</span>`:'지금'}</td><td class="r num">${man(x.c)}</td><td class="r num"><b>${man(x.v)}</b></td><td class="r num">${(x.v/x.c).toFixed(2)}</td>${C.inflOn?`<td class="r num" style="color:var(--warn)">${man(x.real)}</td>`:''}</tr>`).join('')}</tbody></table></div></div></div>
+  <div class="col sticky">  <div class="card"><div class="chead"><h2>조건</h2><span class="hint">저장되지 않아요</span></div>
     <div class="seg full" style="margin-bottom:10px">${[['fin','금융자산'],['net','순금융자산'],['custom','직접 입력']].map(([k,l])=>`<button type="button" data-bm="${k}" aria-pressed="${C.baseMode===k}">${l}</button>`).join('')}</div>
     <div class="field"><input id="cBase" class="num" inputmode="numeric" value="${won(base)}" ${C.baseMode==='custom'?'':'readonly style="opacity:.7"'} aria-label="기준 자산"></div>
     <div class="two"><div class="field"><label for="cMon">매월 투자금 (원)</label><input id="cMon" class="num" inputmode="numeric" value="${won(C.monthly)}"></div><div class="field"><label for="cRate">연 수익률 (%)</label><input id="cRate" class="num" inputmode="decimal" value="${C.rate}"></div></div>
     <div class="field"><label for="cYears">기간 <b class="num" id="yLab" style="color:var(--ink)">${C.years}년</b> (${yr0+C.years}년까지)</label><input id="cYears" type="range" min="1" max="50" value="${C.years}"></div>
     <div class="togrow"><span>물가상승률 반영</span><button type="button" class="switch" role="switch" id="cInfl" aria-checked="${C.inflOn}" aria-label="물가상승률 반영"></button></div>
     ${C.inflOn?`<div class="field"><label for="cInf">연 물가상승률 (%)</label><input id="cInf" class="num" inputmode="decimal" value="${C.infl}"></div>`:''}
-    <p class="hint" style="margin:0">월 복리, 매월 말 투자 기준.${C.inflOn?' 실질가치는 오늘 돈 가치로 환산한 금액.':''}</p></div>
-  <div class="card"><div class="chead"><h2>연도별 표</h2><span class="hint">${C.inflOn?`물가 ${C.infl}% 반영`:'명목 금액'}</span></div>
-    <div class="tbl-wrap calc-tbl"><table><thead><tr><th>경과</th><th class="r">누적 원금</th><th class="r">평가금액</th><th class="r">배수</th>${C.inflOn?'<th class="r">실질가치</th>':''}</tr></thead>
-    <tbody>${rows.map(x=>`<tr><td>${x.y?`${x.y}년 <span class="hint">${yr0+x.y}</span>`:'지금'}</td><td class="r num">${man(x.c)}</td><td class="r num"><b>${man(x.v)}</b></td><td class="r num">${(x.v/x.c).toFixed(2)}</td>${C.inflOn?`<td class="r num" style="color:var(--warn)">${man(x.real)}</td>`:''}</tr>`).join('')}</tbody></table></div></div>`;
+    <p class="hint" style="margin:0">월 복리, 매월 말 투자 기준.${C.inflOn?' 실질가치는 오늘 돈 가치로 환산한 금액.':''}</p></div></div></div>`;
   $$('[data-bm]').forEach(b=>b.onclick=()=>{if(b.dataset.bm==='custom'&&C.baseMode!=='custom')C.custom=Math.round(base);C.baseMode=b.dataset.bm;vCalc()});
   const bindNum=(id,fn)=>{const el=$('#'+id);if(!el||el.readOnly)return;el.onchange=()=>{fn(numIn(el.value));vCalc()};el.onkeydown=e=>{if(e.key==='Enter')el.blur()}};
   bindNum('cBase',v=>C.custom=v);bindNum('cMon',v=>C.monthly=v);bindNum('cRate',v=>C.rate=v);bindNum('cInf',v=>C.infl=v);
