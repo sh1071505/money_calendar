@@ -190,6 +190,16 @@ tfoot td{font-weight:700;border-bottom:0}
 .cb .l{display:flex;justify-content:space-between;font-size:13.5px;gap:8px;margin-bottom:5px}
 .cbgroup{font-size:13px;font-weight:700;color:var(--muted);margin:2px 0 10px}
 /* charts */
+.xl{display:grid;grid-template-columns:16px minmax(0,1fr) auto auto;gap:8px;align-items:center;width:100%;border:0;background:transparent;padding:4px 4px;border-radius:6px;text-align:left;font-size:12.5px;line-height:1.35;color:var(--ink)}
+.xl:active,.xl:hover{background:var(--surface2)}
+.xl.future{opacity:.5}
+.xl .xi{display:grid;place-items:center}
+.xl .xt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xl .xc{font-size:11px;color:var(--faint);white-space:nowrap}
+.xl .xa{font-weight:600;text-align:right;min-width:64px}
+.dgroup.xs{font-size:11px;padding:8px 4px 2px;display:flex;justify-content:space-between;color:var(--muted);font-weight:700;border-top:1px solid var(--line);margin-top:4px}
+.list>.dgroup.xs:first-child{border-top:0;margin-top:0}
+
 svg.chart .hit{fill:transparent;cursor:pointer}
 .mhead2,.mrow{display:grid;grid-template-columns:62px repeat(var(--mc,3),minmax(0,1fr));gap:6px;align-items:center}
 .mhead2{font-size:11.5px;color:var(--faint);font-weight:600;padding:0 10px 4px}
@@ -655,6 +665,8 @@ function txRow(o,c){ROWS.set(o.oid,o);const k=kind(o);
   return `<button type="button" class="row${c?' c':''}${o.future?' future':''}" data-oid="${esc(o.oid)}">${c?cbub(catIcon(o.type,o.cat),28,15):cbub(catIcon(o.type,o.cat))}
   <span style="min-width:0"><span class="t">${esc(o.title)}</span><span class="sub">${esc(o.cat)}${o.memo?' · '+esc(o.memo):''}</span></span>
   <span class="r"><span class="num" style="font-weight:700;color:${o.type==='income'?'var(--inc)':'var(--ink)'}">${o.type==='income'?'+':'-'}${won(o.amount)}</span>${o.future?'<span class="badge b-plan">예정</span>':k?`<span class="badge ${k[1]}">${k[0]}</span>`:''}</span></button>`}
+function txLine(o){ROWS.set(o.oid,o);const k=kind(o);const c=ICON_HUE[catIcon(o.type,o.cat)]||'#8D93A6';
+  return `<button type="button" class="xl${o.future?' future':''}" data-oid="${esc(o.oid)}"><span class="xi" style="color:${c}">${ic(catIcon(o.type,o.cat),13)}</span><span class="xt">${esc(o.title)}</span><span class="xc">${esc(o.cat)}${o.future?' · 예정':k?' · '+k[0]:''}</span><span class="xa num" style="color:${o.type==='income'?'var(--inc)':'var(--ink)'}">${o.type==='income'?'+':'-'}${won(o.amount)}</span></button>`}
 function bindRows(scope){$$(scope+' [data-oid]').forEach(b=>b.onclick=()=>openOcc(ROWS.get(b.dataset.oid)))}
 function openOcc(o){if(!o)return;
   if(o.auto==='dca'){const a=S.assets.find(x=>x.id===o.src);if(a){toast('적립매수는 자산 항목에서 수정해요');openAsset(a.cat,a.id)}return}
@@ -835,7 +847,7 @@ function vFlow(){
   const ser=vals=>[showI?{name:'수입',color:'var(--inc)',values:vals.map(v=>v.inc)}:null,showE?{name:'지출',color:'var(--exp)',values:vals.map(v=>v.exp)}:null].filter(Boolean);
   const tot=k=>{if(M){const [y,m]=k.split('-').map(Number);return mTot(y,m-1)}return yTot(+k)};
   let keys=[],chartKeys=[],labelOf;
-  if(M){for(let ym=cur;ym>=f0;ym=addMonths(ym,-1))keys.push(ym);for(let k=11;k>=0;k--)chartKeys.push(addMonths(cur,-k));labelOf=k=>`${+k.slice(5)}월`}
+  if(M){for(let k=0;k<12;k++)keys.push(addMonths(cur,-k));chartKeys=[...keys].reverse();labelOf=k=>`${+k.slice(5)}월`}
   else{for(let y=TODAY.getFullYear();y>=+f0.slice(0,4);y--)keys.push(String(y));chartKeys=[...keys].reverse();labelOf=k=>k+'년'}
   const selKey=M?Fl.selM:String(Fl.selY);const T={};keys.forEach(k=>T[k]=tot(k));chartKeys.forEach(k=>{if(!T[k])T[k]=tot(k)});
   const chart=barChart({labels:chartKeys.map(labelOf),keys:chartKeys,series:ser(chartKeys.map(k=>T[k])),sel:chartKeys.indexOf(selKey),every:M&&window.innerWidth<500?2:1});
@@ -850,7 +862,7 @@ function vFlow(){
     right=`<div class="card"><div class="chead"><h2>${sm}월 분류별</h2></div>${catBlock(t,showI,showE)}</div>
       <div class="card"><div class="chead"><h2>${sm}월 내역 <span class="hint">${occ.length}건</span></h2><div class="seg sm">${[['all','전체'],['expense','지출'],['income','수입']].map(([k,l])=>`<button type="button" data-df="${k}" aria-pressed="${df===k}">${l}</button>`).join('')}</div></div>
       <div class="list">${Object.keys(groups).length?Object.entries(groups).map(([d,arr])=>{const di=arr.filter(o=>o.type==='income').reduce((a,o)=>a+o.amount,0),de=arr.filter(o=>o.type==='expense').reduce((a,o)=>a+o.amount,0);
-        return `<div class="dgroup c"><span>${mdw(d)}</span><span class="num">${di?`<span style="color:var(--inc)">+${won(di)}</span> `:''}${de?`-${won(de)}`:''}</span></div>${arr.map(o=>txRow(o,true)).join('')}`}).join(''):'<div class="empty">내역 없음</div>'}</div></div>`}
+        return `<div class="dgroup xs"><span>${mdw(d)}</span><span class="num">${di?`<span style="color:var(--inc)">+${won(di)}</span> `:''}${de?`-${won(de)}`:''}</span></div>${arr.map(txLine).join('')}`}).join(''):'<div class="empty">내역 없음</div>'}</div></div>`}
   else{right=`<div class="card"><div class="chead"><h2>${Fl.selY}년 월별</h2><span class="hint">월을 누르면 내역으로</span></div><div class="tbl-wrap"><table><thead><tr><th>월</th>${showI?'<th class="r">수입</th>':''}${showE?'<th class="r">지출</th>':''}${showI&&showE?'<th class="r">합계</th>':''}</tr></thead>
       <tbody>${t.months.map((mt,i)=>(mt.inc||mt.exp)?`<tr class="click" data-goto="${Fl.selY}-${pad(i+1)}"><td>${i+1}월</td>${showI?`<td class="r num" style="color:var(--inc)">${won(mt.inc)}</td>`:''}${showE?`<td class="r num" style="color:var(--exp)">${won(mt.exp)}</td>`:''}${showI&&showE?`<td class="r num">${mt.inc-mt.exp>=0?'+':''}${won(mt.inc-mt.exp)}</td>`:''}</tr>`:'').join('')}</tbody>
       <tfoot><tr><td>합계</td>${showI?`<td class="r num">${won(t.inc)}</td>`:''}${showE?`<td class="r num">${won(t.exp)}</td>`:''}${showI&&showE?`<td class="r num">${t.inc-t.exp>=0?'+':''}${won(t.inc-t.exp)}</td>`:''}</tr></tfoot></table></div></div>
@@ -982,7 +994,7 @@ function openSettings(){
   <p class="hint" style="margin-top:0">이 기기에만 저장돼요. 아이폰 홈 화면 앱과 사파리는 저장 공간이 따로라서, 옮길 땐 백업 파일을 쓰세요.</p>
   <div class="chips"><button type="button" class="btn sm" id="exp">백업 내보내기</button><label class="btn sm" for="impF">백업 불러오기</label><input type="file" id="impF" accept=".json,application/json" hidden></div>
   <div class="chips" style="margin-top:8px"><button type="button" class="btn sm danger" id="blankB">${SET.blank?'한 번 더 누르면 모두 지움':'빈 상태로 시작'}</button><button type="button" class="btn sm" id="reset">${SET.reset?'한 번 더 누르면 되돌림':'예시 데이터 보기'}</button></div>
-  <p class="hint" style="margin:14px 0 0">가계 달력 v3 · ${S.example?'예시 데이터 사용 중':'내 데이터'}</p>`);
+  <p class="hint" style="margin:14px 0 0">가계 달력 v3.2 · ${S.example?'예시 데이터 사용 중':'내 데이터'}</p>`);
   $$('[data-st]').forEach(b=>b.onclick=()=>{SET.tab=b.dataset.st;SET.pick=null;openSettings()});
   $$('[data-pick]').forEach(b=>b.onclick=()=>{SET.pick=SET.pick===+b.dataset.pick?null:+b.dataset.pick;openSettings()});
   $$('[data-ico]').forEach(b=>b.onclick=()=>{arr[SET.pick].icon=b.dataset.ico;SET.pick=null;touch();openSettings()});
@@ -1010,7 +1022,7 @@ $('#fabE').onclick=()=>openForm({type:'expense',date:UI.view==='cal'?UI.sel:TK})
 $('#fabI').onclick=()=>openForm({type:'income',date:UI.view==='cal'?UI.sel:TK});
 render();
 syncRemote(false);
-if('serviceWorker' in navigator&&isWeb())navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&isWeb())navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});
 </script>
 </body>
 </html>
