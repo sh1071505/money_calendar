@@ -1,0 +1,30 @@
+{
+ "updated": "2026-10-11 14:35",
+ "fx": {
+  "USD": 1342.2819,
+  "JPY": 8.4805,
+  "CNY": 200.1601,
+  "EUR": 1503.7594,
+  "GBP": 1776.1989
+ },
+ "quotes": {
+  "AAPL": {
+   "price": 336.64,
+   "currency": "USD",
+   "asOf": "2026-10-10",
+   "src": "yahoo"
+  },
+  "QQQ": {
+   "price": 751.27,
+   "currency": "USD",
+   "asOf": "2026-10-10",
+   "src": "yahoo"
+  },
+  "CRYPTO:BTC": {
+   "price": 113099000.0,
+   "currency": "KRW",
+   "asOf": "2026-10-11",
+   "src": "upbit"
+  }
+ }
+}
