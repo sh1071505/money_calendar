@@ -422,7 +422,7 @@ const COUNTRIES=['미국','한국','중국','일본','유럽'];
 const ASSET_NEWS=['주식','크립토','부동산','금리·채권'];
 
 /* ========== 예시 데이터 ========== */
-function blank(){return {v:3,fx:{KRW:1,USD:1450,JPY:9.4,CNY:203,EUR:1690,GBP:1950},priceUpdated:'',cats:mkCats(),assets:[],loans:[],tx:[],history:[],rcache:{},memo:{},example:false}}
+function blank(){return {v:3,fx:{KRW:1,USD:1450,JPY:9.4,CNY:203,EUR:1690,GBP:1950},priceUpdated:'',cats:mkCats(),assets:[],loans:[],tx:[],history:[],rcache:{},memo:{},example:false,del:{},updatedAt:0}}
 function seed(){
   const S=blank();S.example=true;
   S.assets=[
@@ -491,7 +491,7 @@ const SKEY='solseo-ledger-v3';
 function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}}
 function migrate(o){
   if(!o)return null;
-  if(o.v===3)return o;
+  if(o.v===3){o.del=o.del||{};o.rcache=o.rcache||{};return o}
   if(o.v===2){const n={...blank(),...o,v:3};
     const map=Object.fromEntries([...DEF_CATS.expense,...DEF_CATS.income]);
     n.cats={expense:(o.cats?.expense||[]).map(name=>({name,icon:map[name]||'dots'})),income:(o.cats?.income||[]).map(name=>({name,icon:map[name]||'plusc'}))};
@@ -558,7 +558,7 @@ function yTot(y){const r={inc:0,exp:0,inv:0,bc:{expense:{},income:{}},months:[]}
 function firstYM(){let f=ymOf(TK);for(const t of S.tx)if(ymOf(t.date)<f)f=ymOf(t.date);return f}
 function snapshot(){const T=totals();const k=ymOf(TK);const snap={ym:k,by:{...T.by},fin:Math.round(T.fin),debt:T.debt,total:Math.round(T.total)};
   const i=S.history.findIndex(h=>h.ym===k);if(i>=0)S.history[i]=snap;else{S.history.push(snap);S.history.sort((a,b)=>a.ym<b.ym?-1:1)}}
-function touch(){VER++;snapshot();save()}
+function touch(user=true){VER++;snapshot();if(user){S.updatedAt=Date.now();schedulePush()}save()}
 function fmtCur(v,cur){if(cur==='KRW')return won(v)+'원';const dec=cur==='JPY'?0:2;return CUR_SYM[cur]+Number(v).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec})}
 function fmtQty(q,cat){return Number(q).toLocaleString('ko-KR',{maximumFractionDigits:cat==='crypto'?8:cat==='stock'?4:2})}
 
@@ -578,7 +578,74 @@ async function syncRemote(manual){
   try{REMOTE.watch=await getJSON('data/watchlist.json')}catch(e){}
   try{const ix=await getJSON('reports/index.json');REMOTE.months=ix.months||[];
     for(const m of REMOTE.months)if(manual||!S.rcache[m]){try{S.rcache[m]=await getJSON(`reports/${m}.json`);got++}catch(e){}}}catch(e){}
-  REMOTE.status='done';touch();render();if(manual)toast(got?'시세와 리포트를 새로 받았어요':'받을 새 데이터가 없어요');
+  REMOTE.status='done';touch(false);render();if(manual)toast(got?'시세와 리포트를 새로 받았어요':'받을 새 데이터가 없어요');
+}
+
+/* ========== PC·폰 동기화 (비공개 GitHub 저장소) ========== */
+const SYKEY='mc-sync';
+let SY=(()=>{try{return JSON.parse(localStorage.getItem(SYKEY))||{}}catch(e){return {}}})();
+SY.repo=SY.repo||'sh1071505/money_calendar_data';
+const saveSY=()=>{try{localStorage.setItem(SYKEY,JSON.stringify(SY))}catch(e){}};
+const SYNC={busy:false,again:false,timer:null,forceLocal:false,status:''};
+const b64e=str=>{const by=new TextEncoder().encode(str);let bin='';for(let i=0;i<by.length;i+=0x8000)bin+=String.fromCharCode.apply(null,by.subarray(i,i+0x8000));return btoa(bin)};
+const b64d=str=>new TextDecoder().decode(Uint8Array.from(atob(String(str).replace(/\s/g,'')),c=>c.charCodeAt(0)));
+const ghH=()=>({Authorization:'Bearer '+SY.token,Accept:'application/vnd.github+json'});
+const deviceName=()=>/iPhone|iPad/.test(navigator.userAgent)?'iPhone':/Android/.test(navigator.userAgent)?'Android':'PC';
+const stripDoc=o=>{const {rcache,...rest}=o;return rest};
+const ckey=o=>JSON.stringify([o.cats,(o.assets||[]).map(({price,...r})=>r),o.loans,o.tx,o.memo,o.del]);
+async function ghGet(){
+  const r=await fetch(`https://api.github.com/repos/${SY.repo}/contents/ledger.json?t=${Date.now()}`,{headers:ghH(),cache:'no-store'});
+  if(r.status===404)return null;if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();let txt=j.content?b64d(j.content):null;
+  if(!txt&&j.git_url){const b=await (await fetch(j.git_url,{headers:ghH(),cache:'no-store'})).json();txt=b64d(b.content)}
+  return {data:migrate(JSON.parse(txt)),sha:j.sha};
+}
+async function ghPut(doc,sha){
+  const body={message:`동기화 · ${deviceName()} · ${new Date().toLocaleString('ko-KR')}`,content:b64e(JSON.stringify(doc))};if(sha)body.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${SY.repo}/contents/ledger.json`,{method:'PUT',headers:{...ghH(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(r.status===409||r.status===422)return false;if(!r.ok)throw new Error('HTTP '+r.status);return true;
+}
+function mergeDocs(a,b){
+  const del={...(b.del||{}),...(a.del||{})};
+  const ml=(la,lb)=>{const m=new Map();for(const x of lb||[])m.set(x.id,x);for(const x of la||[]){const y=m.get(x.id);if(!y||(x.mt||0)>=(y.mt||0))m.set(x.id,x)}return [...m.values()].filter(x=>!del[x.id])};
+  const an=(a.updatedAt||0)>=(b.updatedAt||0);const nw=an?a:b,od=an?b:a;
+  const hist=new Map();for(const h of od.history||[])hist.set(h.ym,h);for(const h of nw.history||[])hist.set(h.ym,h);
+  return {...nw,tx:ml(a.tx,b.tx),assets:ml(a.assets,b.assets),loans:ml(a.loans,b.loans),memo:{...(od.memo||{}),...(nw.memo||{})},
+    history:[...hist.values()].sort((x,y)=>x.ym<y.ym?-1:1),del,updatedAt:Math.max(a.updatedAt||0,b.updatedAt||0),rcache:a.rcache||{},example:false};
+}
+function adopt(doc){const rc=S.rcache||{};S={...doc,rcache:{...rc,...(doc.rcache||{})},example:false};S.del=S.del||{};VER++;snapshot();save();render()}
+async function syncNow(manual){
+  if(!SY.token)return;
+  if(S.example){SYNC.status='예시 데이터를 보는 중이라 동기화를 멈췄어요';if(manual)toast(SYNC.status);return}
+  if(SYNC.busy){SYNC.again=true;return}SYNC.busy=true;
+  try{
+    for(let attempt=0;attempt<3;attempt++){
+      const remote=await ghGet();
+      const next=(remote&&!SYNC.forceLocal)?mergeDocs(S,remote.data):S;
+      if(ckey(next)!==ckey(S))adopt(next);
+      if(!remote||ckey(S)!==ckey(remote.data)||SYNC.forceLocal){const ok=await ghPut(stripDoc(S),remote?.sha);if(!ok)continue}
+      SYNC.forceLocal=false;SY.last=new Date().toISOString();saveSY();SYNC.status='';if(manual)toast('동기화했어요');break;
+    }
+  }catch(e){SYNC.status=/HTTP 40[13]/.test(e.message)?'토큰이 틀렸거나 만료됐어요. 설정에서 새 토큰을 넣어 주세요':/Failed to fetch|NetworkError|Load failed/.test(e.message)?'오프라인이라 나중에 동기화할게요':'동기화 실패 ('+e.message+')';if(manual)toast(SYNC.status)}
+  finally{SYNC.busy=false;if(SYNC.again){SYNC.again=false;syncNow()}}
+}
+function schedulePush(){if(!SY.token)return;clearTimeout(SYNC.timer);SYNC.timer=setTimeout(()=>syncNow(),1500)}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncNow()});
+async function connectSync(tok,repo,msg){
+  SY.token=tok;SY.repo=repo;
+  try{
+    const r=await fetch(`https://api.github.com/repos/${repo}`,{headers:ghH(),cache:'no-store'});
+    if(!r.ok)throw new Error(r.status===401?'토큰이 틀렸어요':r.status===404?'저장소를 찾을 수 없어요. 저장소 이름과 토큰에 준 저장소 권한을 확인해 주세요':'연결 실패 (HTTP '+r.status+')');
+    const info=await r.json();if(!info.private)throw new Error('공개 저장소예요. 비공개 저장소만 연결할 수 있어요');
+    const remote=await ghGet();saveSY();
+    const fresh=S.example||(!S.tx.length&&!S.assets.length);
+    if(remote&&fresh){adopt(remote.data);SY.last=new Date().toISOString();saveSY();closeModal();toast('저장소의 기록을 받아왔어요');return}
+    if(remote){msg(`저장소에 이미 기록이 있어요. <div class="chips" style="margin-top:8px"><button type="button" class="btn sm primary" id="syTake">저장소 기록 받기</button><button type="button" class="btn sm" id="syMerge">이 기기 기록과 합치기</button></div>`);
+      $('#syTake').onclick=()=>{adopt(remote.data);SY.last=new Date().toISOString();saveSY();closeModal();toast('저장소의 기록을 받아왔어요')};
+      $('#syMerge').onclick=async()=>{closeModal();await syncNow(true)};return}
+    if(S.example){openSettings();toast('연결됐어요. 초기설정 파일을 불러오면 저장소에 올라가요');return}
+    SYNC.forceLocal=true;closeModal();await syncNow(true);
+  }catch(e){SY.token='';saveSY();msg(esc(e.message))}
 }
 
 /* ========== 차트 ========== */
@@ -722,13 +789,13 @@ function renderForm(){
   const ti=$('#fTitle');ti.oninput=renderSugg;ti.onfocus=renderSugg;
   if(!F.title&&!F.id)renderSugg();
   $('#fSave').onclick=()=>{syncF();saveForm()};
-  if($('#fDel'))$('#fDel').onclick=()=>{if(!F.del){syncF();F.del=true;renderForm();return}const t=S.tx.find(x=>x.id===F.id);S.tx=S.tx.filter(x=>x.id!==F.id);touch();closeModal();render();toast(`${t?.title||'기록'} 삭제됨`)};
+  if($('#fDel'))$('#fDel').onclick=()=>{if(!F.del){syncF();F.del=true;renderForm();return}const t=S.tx.find(x=>x.id===F.id);S.tx=S.tx.filter(x=>x.id!==F.id);S.del[F.id]=Date.now();touch();closeModal();render();toast(`${t?.title||'기록'} 삭제됨`)};
 }
 function key(k){let v=F.amount||'';if(k==='BK')v=v.slice(0,-1);else if(k==='C')v='';else{v=(v==='0'?'':v)+k;if(v.replace(/^0+/,'')==='')v=''}
   if(v.length>12)return;F.amount=v.replace(/^0+(?=\d)/,'');updAmt()}
 function updAmt(){const a=Number(F.amount||0);const el=$('#amtDisp');if(!el)return;el.textContent=won(a)+'원';el.classList.toggle('ph',!a);if($('#instCalc'))$('#instCalc').textContent=`월 ${won(a/F.months)}원 · 총액 입력`}
 function saveForm(){const amt=Number(F.amount||0);if(!amt){toast('금액을 입력해 주세요');return}
-  const t={id:F.id||'t'+Date.now().toString(36),type:F.type,date:F.date,title:F.title.trim()||F.cat,amount:amt,cat:F.cat,memo:F.memo.trim(),repeat:F.mode==='repeat'?F.cycle:null,inst:F.mode==='inst'?{months:F.months}:null};
+  const t={id:F.id||'t'+Date.now().toString(36),type:F.type,date:F.date,title:F.title.trim()||F.cat,amount:amt,cat:F.cat,memo:F.memo.trim(),repeat:F.mode==='repeat'?F.cycle:null,inst:F.mode==='inst'?{months:F.months}:null,mt:Date.now()};
   const i=S.tx.findIndex(x=>x.id===t.id);if(i>=0)S.tx[i]=t;else S.tx.push(t);touch();closeModal();UI.sel=t.date;render();toast(`${t.type==='income'?'수입':'지출'} ${won(amt)}원 기록`)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#modalRoot').innerHTML){closeModal();return}
   if(!F||!$('#amtDisp'))return;const tg=e.target.tagName;if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA')return;
@@ -811,7 +878,7 @@ function renderAsset(){const c=ACAT[A.cat];const f=(id,l,v,ph='',mode='decimal')
   if($('#dcaSw'))$('#dcaSw').onclick=()=>{sync();A.dcaOn=!A.dcaOn;renderAsset()};
   if($('#autoSw'))$('#autoSw').onclick=()=>{sync();A.auto=!A.auto;renderAsset()};
   $$('[data-basis]').forEach(b=>b.onclick=()=>{sync();A.dca.basis=b.dataset.basis;renderAsset()});
-  if($('#aDel'))$('#aDel').onclick=()=>{if(!A.del){sync();A.del=true;renderAsset();return}S.assets=S.assets.filter(x=>x.id!==A.id);touch();closeModal();render();toast('삭제했어요')};
+  if($('#aDel'))$('#aDel').onclick=()=>{if(!A.del){sync();A.del=true;renderAsset();return}S.assets=S.assets.filter(x=>x.id!==A.id);S.del[A.id]=Date.now();touch();closeModal();render();toast('삭제했어요')};
   $('#aSave').onclick=()=>{sync();if(!A.name.trim()){toast('이름을 입력해 주세요');return}
     const o={id:A.id||'a'+Date.now().toString(36),cat:A.cat,name:A.name.trim(),code:A.code.trim().toUpperCase(),cur:A.cur,base:TK,dca:null};
     if(A.cat==='stock'||A.cat==='crypto'){o.qty=numIn(A.qty);o.avg=numIn(A.avg)||numIn(A.price);o.price=numIn(A.price)||o.avg;o.auto=A.auto;if(A.cat==='crypto')o.cur='KRW'}
@@ -819,7 +886,7 @@ function renderAsset(){const c=ACAT[A.cat];const f=(id,l,v,ph='',mode='decimal')
     else if(A.cat==='cash'){o.qty=numIn(A.qty);o.price=1;o.code=''}
     else{o.qty=1;o.price=numIn(A.price);o.cur='KRW'}
     if(c.dca&&A.dcaOn){const v=numIn(A.dca.value);if(!v){toast('적립 금액이나 수량을 입력해 주세요');return}o.dca={basis:A.cat==='saving'?'amt':A.dca.basis,value:v,cycle:A.dca.cycle,day:A.dca.cycle==='D'?null:+A.dca.day,start:A.dca.start||TK}}
-    const i=S.assets.findIndex(x=>x.id===o.id);if(i>=0)S.assets[i]=o;else S.assets.push(o);UI.open.add(o.cat);touch();closeModal();render();
+    o.mt=Date.now();const i=S.assets.findIndex(x=>x.id===o.id);if(i>=0)S.assets[i]=o;else S.assets.push(o);UI.open.add(o.cat);touch();closeModal();render();
     toast(`${o.name} 저장됨${o.auto&&watchMissing().includes(watchName(o))?' · 시세 목록에 추가가 필요해요 (설정)':''}`)};
 }
 let LN=null;
@@ -834,9 +901,9 @@ function renderLoan(){
   const sync=()=>{LN.name=$('#lName').value;LN.lender=$('#lLender').value;LN.principal=$('#lPri').value;LN.rate=$('#lRate').value;LN.interest=$('#lInt').value;LN.start=$('#lStart').value||LN.start};
   const auto=()=>{if(LN.manual)return;const v=Math.round(numIn($('#lPri').value)*numIn($('#lRate').value)/100/12);$('#lInt').value=v?String(v):''};
   $('#lPri').oninput=auto;$('#lRate').oninput=()=>{LN.manual=false;auto()};$('#lInt').oninput=()=>{LN.manual=true};
-  if($('#lDel'))$('#lDel').onclick=()=>{if(!LN.del){sync();LN.del=true;renderLoan();return}S.loans=S.loans.filter(x=>x.id!==LN.id);touch();closeModal();render();toast('대출을 삭제했어요')};
+  if($('#lDel'))$('#lDel').onclick=()=>{if(!LN.del){sync();LN.del=true;renderLoan();return}S.loans=S.loans.filter(x=>x.id!==LN.id);S.del[LN.id]=Date.now();touch();closeModal();render();toast('대출을 삭제했어요')};
   $('#lSave').onclick=()=>{sync();if(!LN.name.trim()||!numIn(LN.principal)){toast('이름과 잔액을 입력해 주세요');return}
-    const o={id:LN.id||'l'+Date.now().toString(36),name:LN.name.trim(),lender:LN.lender.trim()||'—',principal:numIn(LN.principal),rate:numIn(LN.rate),interest:Math.round(numIn(LN.interest)),start:LN.start};
+    const o={id:LN.id||'l'+Date.now().toString(36),name:LN.name.trim(),lender:LN.lender.trim()||'—',principal:numIn(LN.principal),rate:numIn(LN.rate),interest:Math.round(numIn(LN.interest)),start:LN.start,mt:Date.now()};
     const i=S.loans.findIndex(x=>x.id===o.id);if(i>=0)S.loans[i]=o;else S.loans.push(o);touch();closeModal();render();toast(`${o.name} 저장 · 월 이자 ${won(o.interest)}원 자동 등록`)};
 }
 
@@ -942,7 +1009,7 @@ function vMonthly(){
   <div class="card"><div class="chead"><h2>내 메모</h2><span class="hint" id="memoSaved">${R.month.slice(0,4)}년 ${rm}월</span></div><textarea class="note" id="memo" placeholder="이번 달 시장을 보며 든 생각">${esc(S.memo[R.month]||'')}</textarea></div></div></div>`;
   $$('[data-rm]').forEach(b=>b.onclick=()=>{R.month=b.dataset.rm;vMonthly()});$$('[data-range]').forEach(b=>b.onclick=()=>{R.range=b.dataset.range;vMonthly()});
   $$('[data-nm]').forEach(b=>b.onclick=()=>{R.newsMode=b.dataset.nm;R.newsKey=(R.newsMode==='country'?COUNTRIES:ASSET_NEWS)[0];vMonthly()});$$('[data-nk]').forEach(b=>b.onclick=()=>{R.newsKey=b.dataset.nk;vMonthly()});
-  $('#memo').oninput=e=>{S.memo[R.month]=e.target.value;save();$('#memoSaved').textContent='저장됨'};
+  $('#memo').oninput=e=>{S.memo[R.month]=e.target.value;S.updatedAt=Date.now();save();schedulePush();$('#memoSaved').textContent='저장됨'};
 }
 function vCalc(){const T=totals();const C=CALC;const base=C.baseMode==='fin'?T.fin:C.baseMode==='net'?T.netFin:C.custom;
   const r=C.rate/100/12,inf=C.infl/100;const rows=[{y:0,c:base,v:base,real:base}];let v=base,c=base;
@@ -982,7 +1049,14 @@ function openSettings(){
     ${SET.pick===i?`<div class="picker">${PICK_ICONS.map(k=>`<button type="button" data-ico="${k}" aria-pressed="${c.icon===k}" style="color:${ICON_HUE[k]}">${ic(k,20)}</button>`).join('')}</div>`:''}`}).join('');
   const nw=needWatch();const miss=watchMissing();
   modal(`<div class="mhead"><h3>설정</h3>${xbtn()}</div>
-  <div class="secttl" style="margin-top:0">분류 관리</div>
+  <div class="secttl" style="margin-top:0">PC·폰 동기화</div>
+  ${SY.token?`<div class="callout">연결됨 · ${esc(SY.repo)}<br>마지막 동기화 ${SY.last?new Date(SY.last).toLocaleString('ko-KR'):'아직 없음'}${SYNC.status?`<br><b style="color:var(--warn)">${esc(SYNC.status)}</b>`:''}</div>
+    <div class="chips" style="margin-top:8px"><button type="button" class="btn sm" id="syNow">${ic('refresh',14)} 지금 동기화</button><button type="button" class="btn sm danger" id="syOff">${SET.off?'한 번 더 누르면 연결 해제':'연결 해제'}</button></div>`
+  :`<p class="hint" style="margin-top:0">비공개 저장소와 토큰을 넣으면 이 기기의 기록이 다른 기기와 자동으로 맞춰져요. 토큰은 이 기기에만 저장돼요.</p>
+    <div class="field"><label for="syRepo">저장소</label><input id="syRepo" value="${esc(SY.repo)}" autocomplete="off" autocapitalize="off"></div>
+    <div class="field"><label for="syTok">토큰</label><input id="syTok" type="password" placeholder="github_pat_..." autocomplete="off" autocapitalize="off"></div>
+    <button type="button" class="btn primary" id="syGo">연결</button><div class="hint" id="syMsg" style="margin-top:8px"></div>`}
+  <div class="secttl">분류 관리</div>
   <div class="seg full" style="margin-bottom:8px">${[['expense','지출'],['income','수입']].map(([k,l])=>`<button type="button" data-st="${k}" aria-pressed="${ty===k}">${l}</button>`).join('')}</div>
   <p class="calcline" style="margin:0 0 6px">아이콘을 누르면 바꿀 수 있고, 화살표로 기록 화면의 순서를 정해요.</p>
   ${rows}
@@ -994,7 +1068,7 @@ function openSettings(){
   <p class="hint" style="margin-top:0">이 기기에만 저장돼요. 아이폰 홈 화면 앱과 사파리는 저장 공간이 따로라서, 옮길 땐 백업 파일을 쓰세요.</p>
   <div class="chips"><button type="button" class="btn sm" id="exp">백업 내보내기</button><label class="btn sm" for="impF">백업 불러오기</label><input type="file" id="impF" accept=".json,application/json" hidden></div>
   <div class="chips" style="margin-top:8px"><button type="button" class="btn sm danger" id="blankB">${SET.blank?'한 번 더 누르면 모두 지움':'빈 상태로 시작'}</button><button type="button" class="btn sm" id="reset">${SET.reset?'한 번 더 누르면 되돌림':'예시 데이터 보기'}</button></div>
-  <p class="hint" style="margin:14px 0 0">가계 달력 v3.2 · ${S.example?'예시 데이터 사용 중':'내 데이터'}</p>`);
+  <p class="hint" style="margin:14px 0 0">가계 달력 v3.3 · ${S.example?'예시 데이터 사용 중':'내 데이터'}</p>`);
   $$('[data-st]').forEach(b=>b.onclick=()=>{SET.tab=b.dataset.st;SET.pick=null;openSettings()});
   $$('[data-pick]').forEach(b=>b.onclick=()=>{SET.pick=SET.pick===+b.dataset.pick?null:+b.dataset.pick;openSettings()});
   $$('[data-ico]').forEach(b=>b.onclick=()=>{arr[SET.pick].icon=b.dataset.ico;SET.pick=null;touch();openSettings()});
@@ -1006,22 +1080,27 @@ function openSettings(){
   $('#cpW').onclick=()=>{const w=REMOTE.watch||{stocks:[],crypto:[]};const out={stocks:[...new Set([...(w.stocks||[]),...nw.stocks])],crypto:[...new Set([...(w.crypto||[]),...nw.crypto])]};const txt=JSON.stringify(out,null,2);
     (navigator.clipboard?.writeText(txt)||Promise.reject()).then(()=>toast('복사했어요')).catch(()=>{modal(`<div class="mhead"><h3>시세 목록</h3>${xbtn()}</div><textarea class="note" style="min-height:160px" readonly>${esc(txt)}</textarea>`)})};
   $('#syncNow').onclick=()=>{closeModal();syncRemote(true)};
+  if($('#syGo'))$('#syGo').onclick=()=>{const t=$('#syTok').value.trim(),r=$('#syRepo').value.trim();if(!t){toast('토큰을 붙여 넣어 주세요');return}$('#syMsg').textContent='확인 중…';connectSync(t,r,h=>{const m=$('#syMsg');if(m)m.innerHTML=h})};
+  if($('#syNow'))$('#syNow').onclick=async()=>{await syncNow(true);openSettings()};
+  if($('#syOff'))$('#syOff').onclick=()=>{if(!SET.off){SET.off=true;openSettings();return}SET.off=false;SY.token='';SY.last='';saveSY();openSettings();toast('동기화 연결을 해제했어요')};
   $('#exp').onclick=()=>{const blob=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`가계달력_백업_${TK}.json`;document.body.appendChild(a);a.click();a.remove();toast('백업 파일을 만들었어요')};
-  $('#impF').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const o=migrate(JSON.parse(rd.result));if(!o)throw 0;S=o;touch();closeModal();render();toast('백업을 불러왔어요')}catch(_){toast('이 앱에서 내보낸 백업 파일인지 확인해 주세요')}};rd.readAsText(f)};
+  $('#impF').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const o=migrate(JSON.parse(rd.result));if(!o)throw 0;S=o;S.del=S.del||{};S.example=false;SYNC.forceLocal=true;touch();closeModal();render();toast(SY.token?'백업을 불러오고 동기화 저장소에도 올렸어요':'백업을 불러왔어요')}catch(_){toast('이 앱에서 내보낸 백업 파일인지 확인해 주세요')}};rd.readAsText(f)};
   $('#reset').onclick=()=>{if(!SET.reset){SET.reset=true;SET.blank=false;openSettings();return}SET.reset=false;const keep=S.rcache;S=seed();S.rcache=keep||{};VER++;seedHistory(S);touch();closeModal();render();toast('예시 데이터로 바꿨어요')};
-  $('#blankB').onclick=()=>{if(!SET.blank){SET.blank=true;SET.reset=false;openSettings();return}SET.blank=false;const keep=S.rcache;S=blank();S.rcache=keep||{};VER++;touch();closeModal();render();toast('빈 상태로 시작해요')};
+  $('#blankB').onclick=()=>{if(!SET.blank){SET.blank=true;SET.reset=false;openSettings();return}SET.blank=false;const keep=S.rcache;S=blank();S.rcache=keep||{};VER++;SYNC.forceLocal=true;touch();closeModal();render();toast('빈 상태로 시작해요')};
 }
 
 /* ========== 시작 ========== */
 if(!S){S=seed();seedHistory(S)}
 VER++;snapshot();save();
 $('#gear').innerHTML=ic('gear',20);$('#gear').onclick=()=>{SET.reset=false;SET.blank=false;SET.pick=null;openSettings()};
-$('#sync').innerHTML=ic('refresh',19);$('#sync').onclick=()=>syncRemote(true);
+$('#sync').innerHTML=ic('refresh',19);$('#sync').onclick=()=>{syncRemote(true);syncNow(true)};
 $('#fabE').innerHTML=ic('minus',18)+'지출';$('#fabI').innerHTML=ic('plus',18)+'수입';
 $('#fabE').onclick=()=>openForm({type:'expense',date:UI.view==='cal'?UI.sel:TK});
 $('#fabI').onclick=()=>openForm({type:'income',date:UI.view==='cal'?UI.sel:TK});
+S.del=S.del||{};
 render();
 syncRemote(false);
+syncNow();
 if('serviceWorker' in navigator&&isWeb())navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});
 </script>
 </body>
