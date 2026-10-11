@@ -1,4 +1,4 @@
 {
-  "stocks": ["AAPL", "QQQ"],
+  "stocks": ["QQQ", "TSLA", "BRK-A", "NKE", "BMNU", "NVDA", "NVDL"],
   "crypto": ["BTC"]
 }
