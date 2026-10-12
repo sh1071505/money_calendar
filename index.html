@@ -626,7 +626,7 @@ async function syncNow(manual){
       if(!remote||ckey(S)!==ckey(remote.data)||SYNC.forceLocal){const ok=await ghPut(stripDoc(S),remote?.sha);if(!ok)continue}
       SYNC.forceLocal=false;SY.last=new Date().toISOString();saveSY();SYNC.status='';if(manual)toast('동기화했어요');break;
     }
-  }catch(e){SYNC.status=/HTTP 40[13]/.test(e.message)?'토큰이 틀렸거나 만료됐어요. 설정에서 새 토큰을 넣어 주세요':/Failed to fetch|NetworkError|Load failed/.test(e.message)?'오프라인이라 나중에 동기화할게요':'동기화 실패 ('+e.message+')';if(manual)toast(SYNC.status)}
+  }catch(e){SYNC.status=/HTTP 401/.test(e.message)?'토큰이 틀렸거나 만료됐어요. 설정에서 새 토큰을 넣어 주세요':/HTTP 403/.test(e.message)?'토큰에 쓰기 권한이 없어요. GitHub 토큰 설정에서 Contents를 Read and write로 바꿔 주세요':/Failed to fetch|NetworkError|Load failed/.test(e.message)?'오프라인이라 나중에 동기화할게요':'동기화 실패 ('+e.message+')';if(manual)toast(SYNC.status)}
   finally{SYNC.busy=false;if(SYNC.again){SYNC.again=false;syncNow()}}
 }
 function schedulePush(){if(!SY.token)return;clearTimeout(SYNC.timer);SYNC.timer=setTimeout(()=>syncNow(),1500)}
@@ -635,8 +635,8 @@ async function connectSync(tok,repo,msg){
   SY.token=tok;SY.repo=repo;
   try{
     const r=await fetch(`https://api.github.com/repos/${repo}`,{headers:ghH(),cache:'no-store'});
-    if(!r.ok)throw new Error(r.status===401?'토큰이 틀렸어요':r.status===404?'저장소를 찾을 수 없어요. 저장소 이름과 토큰에 준 저장소 권한을 확인해 주세요':'연결 실패 (HTTP '+r.status+')');
-    const info=await r.json();if(!info.private)throw new Error('공개 저장소예요. 비공개 저장소만 연결할 수 있어요');
+    if(!r.ok)throw new Error(r.status===401?'토큰이 틀렸거나 만료됐어요':r.status===403?'토큰 권한이 부족해요. 토큰의 Repository access에 money_calendar_data를 넣고 Contents를 Read and write로 설정해 주세요':r.status===404?'저장소를 찾을 수 없어요. 저장소 이름과 토큰에 준 저장소 권한을 확인해 주세요':'연결 실패 (HTTP '+r.status+')');
+    const info=await r.json();if(!info.private)throw new Error('공개 저장소예요. 비공개 저장소만 연결할 수 있어요');if(info.permissions&&!info.permissions.push)throw new Error('토큰에 쓰기 권한이 없어요. GitHub 토큰 설정에서 Contents를 Read and write로 바꿔 주세요');
     const remote=await ghGet();saveSY();
     const fresh=S.example||(!S.tx.length&&!S.assets.length);
     if(remote&&fresh){adopt(remote.data);SY.last=new Date().toISOString();saveSY();closeModal();toast('저장소의 기록을 받아왔어요');return}
