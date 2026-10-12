@@ -611,16 +611,17 @@ function mergeDocs(a,b){
   const an=(a.updatedAt||0)>=(b.updatedAt||0);const nw=an?a:b,od=an?b:a;
   const hist=new Map();for(const h of od.history||[])hist.set(h.ym,h);for(const h of nw.history||[])hist.set(h.ym,h);
   return {...nw,tx:ml(a.tx,b.tx),assets:ml(a.assets,b.assets),loans:ml(a.loans,b.loans),memo:{...(od.memo||{}),...(nw.memo||{})},
-    history:[...hist.values()].sort((x,y)=>x.ym<y.ym?-1:1),del,updatedAt:Math.max(a.updatedAt||0,b.updatedAt||0),rcache:a.rcache||{},example:false};
+    history:[...hist.values()].sort((x,y)=>x.ym<y.ym?-1:1),del,updatedAt:Math.max(a.updatedAt||0,b.updatedAt||0),epoch:Math.max(a.epoch||0,b.epoch||0),rcache:a.rcache||{},example:false};
 }
 function adopt(doc){const rc=S.rcache||{};S={...doc,rcache:{...rc,...(doc.rcache||{})},example:false};S.del=S.del||{};VER++;snapshot();save();render()}
 async function syncNow(manual){
   if(!SY.token)return;
-  if(S.example){SYNC.status='예시 데이터를 보는 중이라 동기화를 멈췄어요';if(manual)toast(SYNC.status);return}
   if(SYNC.busy){SYNC.again=true;return}SYNC.busy=true;
   try{
     for(let attempt=0;attempt<3;attempt++){
       const remote=await ghGet();
+      if(S.example){if(remote){adopt(remote.data);SYNC.status='';if(manual)toast('저장소의 기록을 받아왔어요')}else{SYNC.status='예시 데이터라 올리지 않았어요. 초기설정 파일을 불러와 주세요'}break}
+      if(remote&&!SYNC.forceLocal&&(remote.data.epoch||0)>(S.epoch||0)){adopt(remote.data);SY.last=new Date().toISOString();saveSY();SYNC.status='';if(manual)toast('새로 설정된 기록으로 바꿨어요');break}
       const next=(remote&&!SYNC.forceLocal)?mergeDocs(S,remote.data):S;
       if(ckey(next)!==ckey(S))adopt(next);
       if(!remote||ckey(S)!==ckey(remote.data)||SYNC.forceLocal){const ok=await ghPut(stripDoc(S),remote?.sha);if(!ok)continue}
@@ -1070,7 +1071,7 @@ function openSettings(){
   <p class="hint" style="margin-top:0">이 기기에만 저장돼요. 아이폰 홈 화면 앱과 사파리는 저장 공간이 따로라서, 옮길 땐 백업 파일을 쓰세요.</p>
   <div class="chips"><button type="button" class="btn sm" id="exp">백업 내보내기</button><label class="btn sm" for="impF">백업 불러오기</label><input type="file" id="impF" accept=".json,application/json" hidden></div>
   <div class="chips" style="margin-top:8px"><button type="button" class="btn sm danger" id="blankB">${SET.blank?'한 번 더 누르면 모두 지움':'빈 상태로 시작'}</button><button type="button" class="btn sm" id="reset">${SET.reset?'한 번 더 누르면 되돌림':'예시 데이터 보기'}</button></div>
-  <p class="hint" style="margin:14px 0 0">가계 달력 v3.4 · ${S.example?'예시 데이터 사용 중':'내 데이터'}</p>`);
+  <p class="hint" style="margin:14px 0 0">가계 달력 v3.5 · ${S.example?'예시 데이터 사용 중':'내 데이터'}</p>`);
   $$('[data-st]').forEach(b=>b.onclick=()=>{SET.tab=b.dataset.st;SET.pick=null;openSettings()});
   $$('[data-pick]').forEach(b=>b.onclick=()=>{SET.pick=SET.pick===+b.dataset.pick?null:+b.dataset.pick;openSettings()});
   $$('[data-ico]').forEach(b=>b.onclick=()=>{arr[SET.pick].icon=b.dataset.ico;SET.pick=null;touch();openSettings()});
@@ -1086,9 +1087,9 @@ function openSettings(){
   if($('#syNow'))$('#syNow').onclick=async()=>{await syncNow(true);openSettings()};
   if($('#syOff'))$('#syOff').onclick=()=>{if(!SET.off){SET.off=true;openSettings();return}SET.off=false;SY.token='';SY.last='';saveSY();openSettings();toast('동기화 연결을 해제했어요')};
   $('#exp').onclick=()=>{const blob=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`가계달력_백업_${TK}.json`;document.body.appendChild(a);a.click();a.remove();toast('백업 파일을 만들었어요')};
-  $('#impF').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const o=migrate(JSON.parse(rd.result));if(!o)throw 0;const now=Date.now();o.del=o.del||{};const keep=new Set([...o.tx,...o.assets,...o.loans].map(x=>x.id));for(const x of [...S.tx,...S.assets,...S.loans])if(!keep.has(x.id))o.del[x.id]=now;for(const x of [...o.tx,...o.assets,...o.loans]){x.mt=now;delete o.del[x.id]}S=o;S.example=false;SYNC.forceLocal=true;touch();closeModal();render();toast(SY.token?'백업을 불러오고 동기화 저장소에도 올렸어요':'백업을 불러왔어요')}catch(_){toast('이 앱에서 내보낸 백업 파일인지 확인해 주세요')}};rd.readAsText(f)};
+  $('#impF').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const o=migrate(JSON.parse(rd.result));if(!o)throw 0;const now=Date.now();o.del=o.del||{};const keep=new Set([...o.tx,...o.assets,...o.loans].map(x=>x.id));for(const x of [...S.tx,...S.assets,...S.loans])if(!keep.has(x.id))o.del[x.id]=now;for(const x of [...o.tx,...o.assets,...o.loans]){x.mt=now;delete o.del[x.id]}o.epoch=now;S=o;S.example=false;SYNC.forceLocal=true;touch();closeModal();render();toast(SY.token?'백업을 불러오고 동기화 저장소에도 올렸어요':'백업을 불러왔어요')}catch(_){toast('이 앱에서 내보낸 백업 파일인지 확인해 주세요')}};rd.readAsText(f)};
   $('#reset').onclick=()=>{if(!SET.reset){SET.reset=true;SET.blank=false;openSettings();return}SET.reset=false;const keep=S.rcache;S=seed();S.rcache=keep||{};VER++;seedHistory(S);touch();closeModal();render();toast('예시 데이터로 바꿨어요')};
-  $('#blankB').onclick=()=>{if(!SET.blank){SET.blank=true;SET.reset=false;openSettings();return}SET.blank=false;const keep=S.rcache;S=blank();S.rcache=keep||{};VER++;SYNC.forceLocal=true;touch();closeModal();render();toast('빈 상태로 시작해요')};
+  $('#blankB').onclick=()=>{if(!SET.blank){SET.blank=true;SET.reset=false;openSettings();return}SET.blank=false;const keep=S.rcache;S=blank();S.rcache=keep||{};S.epoch=Date.now();VER++;SYNC.forceLocal=true;touch();closeModal();render();toast('빈 상태로 시작해요')};
 }
 
 /* ========== 시작 ========== */
