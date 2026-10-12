@@ -815,7 +815,7 @@ function vAsset(){
     <span style="min-width:0"><span class="t">${esc(l.name)}</span><span class="sub">${esc(l.lender)} · 연 ${l.rate}% · 월 이자 ${won(l.interest)}원</span></span><span class="r"><span class="num" style="font-weight:700;color:var(--exp)">-${won(l.principal)}</span><span class="hint">매월 1일 자동 지출</span></span></button>`).join('');
   const lu=S.priceUpdated?`시세 ${esc(S.priceUpdated)}`:'자동 시세 아직 없음';
   const fxList=['USD','JPY','CNY','EUR','GBP'].map(c=>`<div class="fxl"><span class="code">${c}</span><span class="num">${(fxr(c)*(c==='JPY'?100:1)).toLocaleString('ko-KR',{maximumFractionDigits:2})}원${c==='JPY'?'<small>/100엔</small>':''}</span></div>`).join('');
-  $('#view').innerHTML=`<div class="cols"><div class="col sticky">
+  $('#view').innerHTML=`<div class="cols"><div class="col">
   <div class="card hero">
     <div class="herotop"><div class="k">총 금융자산</div>
       <button type="button" class="fxchip" id="fxChip" aria-expanded="${!!UI.fxOpen}"><span>USD</span> <b class="num">${fxr('USD').toLocaleString('ko-KR',{maximumFractionDigits:2})}원</b> <span class="chev2">${ic('chev',12)}</span></button></div>
@@ -826,11 +826,13 @@ function vAsset(){
     <div class="subs"><div><div class="k">순금융자산</div><div class="v num">${man(T.netFin)}</div></div><div><div class="k">총자산</div><div class="v num">${man(T.total)}</div></div><div><div class="k">부채</div><div class="v num" style="color:var(--exp)">-${man(T.debt)}</div></div></div>
     <div class="pricebar"><span class="hint">${lu} · 이번 달 적립 ${man(monthDca)}원</span><button type="button" class="btn sm" id="refresh">${ic('refresh',14)} 시세 받기</button></div>
   </div>
+  <div class="card">${accs}</div></div>
+  <div class="col sticky">
   <div class="card"><div class="chead"><h2>대출</h2><button type="button" class="btn sm primary" id="addLoan">${ic('plus',14)} 대출 추가</button></div>
     <div class="list">${loans||'<div class="empty">등록된 대출 없음</div>'}</div>
     ${S.loans.length?`<div class="calcline" style="margin:8px 0 0">합계 -${won(T.debt)}원 · 월 이자 ${won(T.interest)}원</div>`:''}</div>
   <div class="callout">해외주식과 코인은 매일 아침 시세가 자동으로 들어와요. 국내주식은 현재가를 직접 고쳐 주세요. 대출 이자는 매월 1일, 적립매수는 정한 날짜에 지출로 자동 등록되고 자산 보유량에 더해져요.</div></div>
-  <div class="col"><div class="card">${accs}</div></div></div>`;
+  </div>`;
   $('#fxChip').onclick=()=>{UI.fxOpen=!UI.fxOpen;vAsset()};
   $$('[data-acc]').forEach(b=>b.onclick=()=>{const k=b.dataset.acc;const was=UI.open.has(k);UI.open=new Set(was?[]:[k]);vAsset();if(!was){const el=$(`[data-acc="${k}"]`);if(el&&el.getBoundingClientRect().top<70)el.scrollIntoView({block:'start',behavior:'smooth'})}});
   $$('[data-add]').forEach(b=>b.onclick=()=>openAsset(b.dataset.add,null));
@@ -1068,7 +1070,7 @@ function openSettings(){
   <p class="hint" style="margin-top:0">이 기기에만 저장돼요. 아이폰 홈 화면 앱과 사파리는 저장 공간이 따로라서, 옮길 땐 백업 파일을 쓰세요.</p>
   <div class="chips"><button type="button" class="btn sm" id="exp">백업 내보내기</button><label class="btn sm" for="impF">백업 불러오기</label><input type="file" id="impF" accept=".json,application/json" hidden></div>
   <div class="chips" style="margin-top:8px"><button type="button" class="btn sm danger" id="blankB">${SET.blank?'한 번 더 누르면 모두 지움':'빈 상태로 시작'}</button><button type="button" class="btn sm" id="reset">${SET.reset?'한 번 더 누르면 되돌림':'예시 데이터 보기'}</button></div>
-  <p class="hint" style="margin:14px 0 0">가계 달력 v3.3 · ${S.example?'예시 데이터 사용 중':'내 데이터'}</p>`);
+  <p class="hint" style="margin:14px 0 0">가계 달력 v3.4 · ${S.example?'예시 데이터 사용 중':'내 데이터'}</p>`);
   $$('[data-st]').forEach(b=>b.onclick=()=>{SET.tab=b.dataset.st;SET.pick=null;openSettings()});
   $$('[data-pick]').forEach(b=>b.onclick=()=>{SET.pick=SET.pick===+b.dataset.pick?null:+b.dataset.pick;openSettings()});
   $$('[data-ico]').forEach(b=>b.onclick=()=>{arr[SET.pick].icon=b.dataset.ico;SET.pick=null;touch();openSettings()});
@@ -1084,7 +1086,7 @@ function openSettings(){
   if($('#syNow'))$('#syNow').onclick=async()=>{await syncNow(true);openSettings()};
   if($('#syOff'))$('#syOff').onclick=()=>{if(!SET.off){SET.off=true;openSettings();return}SET.off=false;SY.token='';SY.last='';saveSY();openSettings();toast('동기화 연결을 해제했어요')};
   $('#exp').onclick=()=>{const blob=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`가계달력_백업_${TK}.json`;document.body.appendChild(a);a.click();a.remove();toast('백업 파일을 만들었어요')};
-  $('#impF').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const o=migrate(JSON.parse(rd.result));if(!o)throw 0;S=o;S.del=S.del||{};S.example=false;SYNC.forceLocal=true;touch();closeModal();render();toast(SY.token?'백업을 불러오고 동기화 저장소에도 올렸어요':'백업을 불러왔어요')}catch(_){toast('이 앱에서 내보낸 백업 파일인지 확인해 주세요')}};rd.readAsText(f)};
+  $('#impF').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const o=migrate(JSON.parse(rd.result));if(!o)throw 0;const now=Date.now();o.del=o.del||{};const keep=new Set([...o.tx,...o.assets,...o.loans].map(x=>x.id));for(const x of [...S.tx,...S.assets,...S.loans])if(!keep.has(x.id))o.del[x.id]=now;for(const x of [...o.tx,...o.assets,...o.loans]){x.mt=now;delete o.del[x.id]}S=o;S.example=false;SYNC.forceLocal=true;touch();closeModal();render();toast(SY.token?'백업을 불러오고 동기화 저장소에도 올렸어요':'백업을 불러왔어요')}catch(_){toast('이 앱에서 내보낸 백업 파일인지 확인해 주세요')}};rd.readAsText(f)};
   $('#reset').onclick=()=>{if(!SET.reset){SET.reset=true;SET.blank=false;openSettings();return}SET.reset=false;const keep=S.rcache;S=seed();S.rcache=keep||{};VER++;seedHistory(S);touch();closeModal();render();toast('예시 데이터로 바꿨어요')};
   $('#blankB').onclick=()=>{if(!SET.blank){SET.blank=true;SET.reset=false;openSettings();return}SET.blank=false;const keep=S.rcache;S=blank();S.rcache=keep||{};VER++;SYNC.forceLocal=true;touch();closeModal();render();toast('빈 상태로 시작해요')};
 }
