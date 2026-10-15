@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-14 09:35",
+ "updated": "2026-10-15 09:04",
  "fx": {
   "USD": 1340.4826,
   "JPY": 8.472,
@@ -15,51 +15,51 @@
    "src": "yahoo"
   },
   "QQQ": {
-   "price": 743.57,
+   "price": 728.95,
    "currency": "USD",
-   "asOf": "2026-10-14",
+   "asOf": "2026-10-15",
    "src": "yahoo"
   },
   "CRYPTO:BTC": {
-   "price": 112960000.0,
+   "price": 110499000.0,
    "currency": "KRW",
-   "asOf": "2026-10-14",
+   "asOf": "2026-10-15",
    "src": "upbit"
   },
   "TSLA": {
-   "price": 375.23,
+   "price": 367.16,
    "currency": "USD",
-   "asOf": "2026-10-14",
+   "asOf": "2026-10-15",
    "src": "yahoo"
   },
   "BRK-A": {
-   "price": 780350.0,
+   "price": 789585.0,
    "currency": "USD",
-   "asOf": "2026-10-14",
+   "asOf": "2026-10-15",
    "src": "yahoo"
   },
   "NKE": {
-   "price": 35.33,
+   "price": 35.3,
    "currency": "USD",
-   "asOf": "2026-10-14",
+   "asOf": "2026-10-15",
    "src": "yahoo"
   },
   "BMNU": {
-   "price": 16.26,
+   "price": 14.53,
    "currency": "USD",
-   "asOf": "2026-10-14",
+   "asOf": "2026-10-15",
    "src": "yahoo"
   },
   "NVDA": {
-   "price": 228.52,
+   "price": 221.3,
    "currency": "USD",
-   "asOf": "2026-10-14",
+   "asOf": "2026-10-15",
    "src": "yahoo"
   },
   "NVDL": {
-   "price": 36.58,
+   "price": 34.32,
    "currency": "USD",
-   "asOf": "2026-10-14",
+   "asOf": "2026-10-15",
    "src": "yahoo"
   }
  }
